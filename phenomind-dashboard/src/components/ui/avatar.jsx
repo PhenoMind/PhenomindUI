@@ -1,5 +1,7 @@
 import React from 'react';
-import { cn } from '../../lib/utils.js';
+import { clsx } from 'clsx';
+
+const cn = (...inputs) => clsx(inputs);
 
 const Avatar = React.forwardRef(({ className, ...props }, ref) => (
   <div
