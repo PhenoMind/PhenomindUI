@@ -229,22 +229,36 @@ The build output will be in `frontend/build/`.
 
 ### Vercel Deployment
 
-The project is configured for Vercel deployment with a `vercel.json` in the root directory.
+**Step-by-Step Fix:**
 
-**Vercel Project Settings:**
-1. **Root Directory**: Leave as default (project root)
-2. **Framework Preset**: Create React App (or let Vercel auto-detect)
-3. The `vercel.json` file handles the build configuration automatically
+1. **In Vercel Dashboard:**
+   - Go to your project → **Settings** → **General**
+   - Find **Root Directory** setting
+   - Set it to: `frontend`
+   - **Framework Preset**: Create React App (or let Vercel auto-detect)
+   - **Build Command**: Leave as default (Vercel will use `npm run build`)
+   - **Output Directory**: Leave as default (`build`)
 
-**Environment Variables in Vercel Dashboard:**
-Add these in your Vercel project settings → Environment Variables:
-- `REACT_APP_API_URL` - Your deployed backend API URL (e.g., `https://your-backend.railway.app` or your backend URL)
+2. **Environment Variables:**
+   - Go to **Settings** → **Environment Variables**
+   - Add: `REACT_APP_API_URL` = Your deployed backend URL
+   - Make sure it's added for **Production**, **Preview**, and **Development** environments
 
-**Alternative: Set Root Directory to `frontend`**
-If the above doesn't work, you can:
-1. In Vercel Dashboard → Settings → General
-2. Set **Root Directory** to `frontend`
-3. Remove the `cd frontend &&` from build commands in `vercel.json` (or delete `vercel.json` and let Vercel auto-detect)
+3. **Redeploy:**
+   - Go to **Deployments** tab
+   - Click the three dots on the latest deployment → **Redeploy**
+
+**Why This Works:**
+- Setting Root Directory to `frontend` tells Vercel to treat `frontend/` as the project root
+- Vercel will automatically detect Create React App and use the correct build settings
+- The `vercel.json` in `frontend/` handles routing for React Router
+
+**If Deployment Still Fails:**
+
+Check the build logs in Vercel for specific errors. Common issues:
+- Missing `REACT_APP_API_URL` environment variable
+- Node version mismatch (Vercel should auto-detect, but you can set Node.js version in settings)
+- Missing dependencies (check that `package.json` has all required packages)
 
 **Note:** The backend needs to be deployed separately (e.g., on Heroku, Railway, Render, or another service). The `REACT_APP_API_URL` should point to that deployed backend URL.
 
