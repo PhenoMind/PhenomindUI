@@ -321,6 +321,7 @@ function PatientChatbot({ patient, analytics }) {
         timestamp: new Date()
       }]);
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [patient?.id]);
 
   const generateResponse = (userMessage) => {
