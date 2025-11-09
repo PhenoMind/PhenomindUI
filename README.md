@@ -225,6 +225,23 @@ npm run build
 
 The build output will be in `frontend/build/`.
 
+## 🚀 Deployment
+
+### Vercel Deployment
+
+The project is configured for Vercel deployment with a `vercel.json` in the root directory.
+
+**Important Vercel Settings:**
+1. **Root Directory**: Set to project root (PhenomindUI/)
+2. **Build Command**: `cd frontend && npm install && npm run build`
+3. **Output Directory**: `frontend/build`
+4. **Framework Preset**: Create React App
+
+**Environment Variables in Vercel:**
+- `REACT_APP_API_URL` - Your backend API URL (e.g., `https://your-backend.vercel.app` or your backend URL)
+
+**Note:** The backend needs to be deployed separately (e.g., on Heroku, Railway, or another service) and the `REACT_APP_API_URL` should point to that deployed backend URL.
+
 ## 📖 Documentation
 
 - [Hosting Guide](./docs/HOSTING_GUIDE.md) - Deployment instructions
