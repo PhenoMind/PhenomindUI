@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect, useCallback } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "./components/ui/card.jsx";
 import { Button } from "./components/ui/button.jsx";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "./components/ui/tabs.jsx";
@@ -7,159 +7,115 @@ import { Badge } from "./components/ui/badge.jsx";
 import { Input } from "./components/ui/input.jsx";
 import { Label } from "./components/ui/label.jsx";
 import { Avatar, AvatarFallback, AvatarImage } from "./components/ui/avatar.jsx";
-import { AlertTriangle, Activity, Brain, ShieldCheck, ShieldAlert, Bell, Calendar as CalIcon, Search, TrendingUp, LineChart as LineIcon, Users, Lock, Stethoscope, Info } from "lucide-react";
+import { AlertTriangle, Activity, Brain, ShieldCheck, ShieldAlert, Bell, Calendar as CalIcon, Search, TrendingUp, LineChart as LineIcon, Users, Lock, Stethoscope } from "lucide-react";
 import { LineChart, Line, XAxis, YAxis, Tooltip as RTooltip, CartesianGrid, ResponsiveContainer, AreaChart, Area, BarChart, Bar } from "recharts";
 import { motion } from "framer-motion";
+import apiService from "./services/api.js";
 
-// --- Fake demo data ---
-const days = Array.from({ length: 30 }).map((_, i) => {
-  const d = new Date();
-  d.setDate(d.getDate() - (29 - i));
-  const label = d.toLocaleDateString(undefined, { month: "short", day: "numeric" });
-  return label;
-});
+// ... existing code for RiskChip, Stat, TrendCard, AISummary, TimelineCard, PopulationView, ForecastCard components ...
 
-const trendData = days.map((d, i) => ({
-  day: d,
-  mood: 60 + Math.sin(i / 4) * 10 + (i > 20 ? -6 : 0), // scaled 0-100
-  sleep: 7 + Math.sin(i / 5) * 0.6 + (i > 22 ? -0.8 : 0), // hours
-  hrv: 45 + Math.cos(i / 6) * 8 + (i > 20 ? -6 : 0), // ms
-  activity: 7000 + Math.sin(i / 3) * 1500 + (i > 24 ? -2200 : 0), // steps
-}));
+// Patient Sidebar Component
+function PatientSidebar({ patients, selectedPatientId, onPatientSelect, searchQuery, setSearchQuery, filteredPatients }) {
 
-const forecastData = days.slice(20).map((d, i) => ({
-  day: d,
-  risk: Math.max(4, Math.min(96, 35 + i * 2.5 + (i > 6 ? 6 : 0) + Math.sin(i) * 4)),
-}));
+  const getRiskColor = (score) => {
+    if (score < 33) return "bg-emerald-100 text-emerald-700 border-emerald-200";
+    if (score < 66) return "bg-amber-100 text-amber-700 border-amber-200";
+    return "bg-red-100 text-red-700 border-red-200";
+  };
 
-const population = [
-  { site: "Mass General Hospital", patients: 324, highRisk: 45, modelAccuracy: 89 },
-  { site: "Johns Hopkins", patients: 298, highRisk: 38, modelAccuracy: 92 },
-  { site: "Mayo Clinic", patients: 412, highRisk: 67, modelAccuracy: 87 },
-  { site: "Cleveland Clinic", patients: 256, highRisk: 31, modelAccuracy: 91 },
-];
-
-const disorderBreakdown = [
-  { disorder: "Depression", totalPatients: 645, highRisk: 89, networkSites: 4 },
-  { disorder: "Bipolar", totalPatients: 298, highRisk: 47, networkSites: 4 },
-  { disorder: "Anxiety", totalPatients: 423, highRisk: 52, networkSites: 4 },
-  { disorder: "PTSD", totalPatients: 124, highRisk: 18, networkSites: 3 },
-];
-
-const timeline = [
-  { date: "Apr 3", label: "Medication dose ↑ (Sertraline 50→75mg)", type: "med" },
-  { date: "Apr 6", label: "Sleep irregularity detected (avg 5.8h; baseline 7.1h)", type: "alert" },
-  { date: "Apr 10", label: "PHQ-9 via app: 12 (↑2)", type: "survey" },
-  { date: "Apr 13", label: "Reduced mobility (−32% steps vs baseline)", type: "alert" },
-  { date: "Apr 15", label: "Televisit completed; therapy referral placed", type: "visit" },
-];
-
-function RiskChip({ score }) {
-  const level = score < 33 ? "Low" : score < 66 ? "Moderate" : "High";
-  const Icon = level === "High" ? ShieldAlert : ShieldCheck;
-  const color = level === "High" ? "bg-red-100 text-red-700" : level === "Moderate" ? "bg-amber-100 text-amber-700" : "bg-emerald-100 text-emerald-700";
   return (
-    <Badge className={`rounded-full px-5 py-3 ${color} font-semibold text-lg`}> 
-      <Icon className="mr-2 h-6 w-6" />{level} • {Math.round(score)}%
-    </Badge>
-  );
-}
-
-function Stat({ title, value, delta, icon: Icon }) {
-  return (
-    <Card className="rounded-2xl shadow-sm">
-      <CardHeader className="flex flex-row items-center justify-between pb-2">
-        <CardTitle className="text-xl font-semibold text-foreground flex items-center gap-2"><Icon className="h-6 w-6" />{title}</CardTitle>
-        {delta && <span className={`text-lg font-semibold ${delta.startsWith("+") ? "text-emerald-600" : "text-rose-600"}`}>{delta}</span>}
-      </CardHeader>
-      <CardContent>
-        <div className="text-4xl font-semibold text-center">{value}</div>
-      </CardContent>
-    </Card>
-  );
-}
-
-function TrendCard({ title, dataKey, unit, description }) {
-  return (
-    <Card className="rounded-2xl shadow-sm">
-      <CardHeader className="pb-2">
-        <CardTitle className="text-xl font-semibold text-foreground flex items-center gap-2"><LineIcon className="h-6 w-6" />{title}</CardTitle>
-      </CardHeader>
-      <CardContent>
-        <div className="h-40">
-          <ResponsiveContainer width="100%" height="100%">
-            <AreaChart data={trendData} margin={{ left: 10, right: 10 }}>
-              <defs>
-                <linearGradient id={`g-${String(dataKey)}`} x1="0" y1="0" x2="0" y2="1">
-                  <stop offset="5%" stopOpacity={0.35}/>
-                  <stop offset="95%" stopOpacity={0}/>
-                </linearGradient>
-              </defs>
-              <CartesianGrid strokeDasharray="3 3" />
-              <XAxis dataKey="day" hide />
-              <YAxis hide />
-              <RTooltip 
-                formatter={(v) => `${v}${unit ?? ""}`}
-                contentStyle={{
-                  backgroundColor: '#ffffff',
-                  border: '1px solid #e5e7eb',
-                  borderRadius: '8px',
-                  boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1)',
-                  fontSize: '16px'
-                }}
-              />
-              <Area type="monotone" dataKey={String(dataKey)} strokeWidth={2} fillOpacity={1} fill={`url(#g-${String(dataKey)})`} />
-            </AreaChart>
-          </ResponsiveContainer>
+    <div className="w-80 bg-white border-r border-gray-200 flex flex-col h-screen fixed left-0 top-0 overflow-hidden">
+      {/* Sidebar Header */}
+      <div className="p-6 border-b border-gray-200 bg-gradient-to-r from-blue-50 to-indigo-50">
+        <div className="flex items-center gap-3 mb-4">
+          <img 
+            src="/logo.png" 
+            alt="PhenoMind Logo" 
+            className="h-10 w-10 object-contain"
+          />
+          <h2 className="text-xl font-semibold text-gray-900">Patients</h2>
         </div>
-        {description && <p className="text-base text-muted-foreground mt-2">{description}</p>}
-      </CardContent>
-    </Card>
+        <div className="relative">
+          <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-5 w-5 text-gray-400" />
+                <Input
+                  placeholder="Search patients..."
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+            className="pl-10 w-full"
+                />
+              </div>
+      </div>
+
+      {/* Patient List */}
+      <div className="flex-1 overflow-y-auto">
+        <div className="p-4 space-y-3">
+          {(filteredPatients || patients).map((patient) => {
+            const isSelected = patient.id === selectedPatientId;
+            return (
+                  <button
+                key={patient.id}
+                onClick={() => onPatientSelect(patient.id)}
+                className={`w-full text-left p-4 rounded-xl border-2 transition-all duration-200 hover:shadow-md ${
+                  isSelected
+                    ? "bg-blue-50 border-blue-300 shadow-md"
+                    : "bg-white border-gray-200 hover:border-gray-300"
+                }`}
+              >
+                <div className="flex items-start gap-3">
+                  <Avatar className="h-12 w-12 flex-shrink-0">
+                    <AvatarImage src={patient.avatar} />
+                    <AvatarFallback className="text-sm font-semibold">{patient.initials}</AvatarFallback>
+                    </Avatar>
+                  <div className="flex-1 min-w-0">
+                    <div className="flex items-start justify-between gap-2 mb-1">
+                      <h3 className={`font-semibold text-base truncate ${isSelected ? "text-blue-900" : "text-gray-900"}`}>
+                        {patient.name}
+                      </h3>
+                    </div>
+                    <p className="text-sm text-gray-600 mb-2">{patient.disorderFull}</p>
+                    <div className="flex items-center gap-2 flex-wrap">
+                      <Badge 
+                        className={`text-xs px-2 py-1 font-semibold border ${getRiskColor(patient.riskScore)}`}
+                      >
+                        {patient.riskScore < 33 ? "Low" : patient.riskScore < 66 ? "Moderate" : "High"} Risk
+                    </Badge>
+                      <span className="text-xs text-gray-500">• {patient.age} years</span>
+                    </div>
+                    <div className="mt-2 text-xs text-gray-500">
+                      Last visit: {patient.lastVisit}
+                    </div>
+                  </div>
+                </div>
+                  </button>
+            );
+          })}
+              </div>
+            </div>
+
+      {/* Sidebar Footer */}
+      <div className="p-4 border-t border-gray-200 bg-gray-50">
+        <div className="text-sm text-gray-600 text-center">
+          <span className="font-semibold">{(filteredPatients || patients).length}</span> patient{(filteredPatients || patients).length !== 1 ? 's' : ''} found
+        </div>
+      </div>
+    </div>
   );
 }
 
-function AISummary() {
-  return (
-    <Card className="rounded-2xl shadow-sm border-emerald-100">
-      <CardHeader className="pb-2">
-        <CardTitle className="text-xl font-semibold text-foreground flex items-center gap-2"><Brain className="h-6 w-6" />AI Summary</CardTitle>
-      </CardHeader>
-      <CardContent className="space-y-3 text-lg">
-        <div className="flex items-center justify-between">
-          <div className="flex items-center gap-2">
-            <ShieldAlert className="h-6 w-6" />
-            <span className="font-medium">Relapse likelihood (14 days)</span>
-          </div>
-          <RiskChip score={58} />
-        </div>
-        <Progress value={58} className="h-4" />
-        <ul className="list-disc pl-6 text-muted-foreground text-lg space-y-1">
-          <li>Primary drivers: sleep irregularity, reduced HRV, mobility ↓</li>
-          <li>Protective factor: consistent therapy attendance</li>
-        </ul>
-        <div className="pt-2">
-          <Label className="text-base uppercase tracking-wide text-muted-foreground font-semibold">Recommendations</Label>
-          <div className="mt-3 grid grid-cols-1 gap-3 md:grid-cols-2">
-            <Button variant="secondary" className="justify-start text-base py-3"><Stethoscope className="h-6 w-6 mr-2"/>Consider sleep-focused CBT-I referral</Button>
-            <Button variant="secondary" className="justify-start text-base py-3"><Activity className="h-6 w-6 mr-2"/>Review HRV and medication timing</Button>
-          </div>
-        </div>
-      </CardContent>
-    </Card>
-  );
-}
-
-function PatientHeader() {
+// Simplified Patient Header (no dropdown)
+function PatientHeader({ patient }) {
   return (
     <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
-      <div className="flex items-center gap-3">
+      <div className="flex items-center gap-4">
         <Avatar className="h-16 w-16">
-          <AvatarImage src="https://i.pravatar.cc/100?img=5" />
-          <AvatarFallback className="text-xl font-semibold">JD</AvatarFallback>
+          <AvatarImage src={patient.avatar} />
+          <AvatarFallback className="text-xl font-semibold">{patient.initials}</AvatarFallback>
         </Avatar>
         <div>
-          <h1 className="text-3xl font-semibold">Jane Doe</h1>
-          <p className="text-lg text-muted-foreground">MDD • Sertraline 75mg • Last visit: 10 days ago</p>
+          <h1 className="text-3xl font-semibold">{patient.name}</h1>
+          <p className="text-lg text-muted-foreground">
+            {patient.disorderFull} • {patient.medications.join(", ")} • Last visit: {patient.lastVisit}
+          </p>
         </div>
       </div>
       <div className="flex gap-3 items-center">
@@ -168,231 +124,23 @@ function PatientHeader() {
           <span className="text-lg text-muted-foreground">Range: 30 days</span>
         </div>
         <div className="flex items-center gap-3">
-          <Input placeholder="Search patients" className="w-52 text-lg py-3"/>
-          <Button variant="outline" className="text-lg py-3 px-4"><Search className="h-6 w-6 mr-2"/>Search</Button>
-          <Button className="text-lg py-3 px-4"><Bell className="h-6 w-6 mr-2"/>Alerts</Button>
+          <Button variant="outline" className="text-lg py-3 px-4"><Bell className="h-6 w-6 mr-2"/>Alerts</Button>
         </div>
       </div>
     </div>
   );
 }
 
-function TimelineCard() {
-  const dot = (t) => t === "alert" ? "bg-rose-500" : t === "med" ? "bg-indigo-500" : t === "visit" ? "bg-emerald-500" : "bg-amber-500";
-  return (
-    <Card className="rounded-2xl shadow-sm">
-      <CardHeader className="pb-2">
-        <CardTitle className="text-xl font-semibold text-foreground flex items-center gap-2"><TrendingUp className="h-6 w-6" />Patient Timeline</CardTitle>
-      </CardHeader>
-      <CardContent>
-        <div className="relative pl-4">
-          <div className="absolute left-4 top-0 bottom-0 w-px bg-muted" />
-          <ul className="space-y-5">
-            {timeline.map((t, i) => (
-              <li key={i} className="relative">
-                <div className={`absolute -left-[8px] top-1 h-4 w-4 rounded-full ${dot(t.type)}`} />
-                <div className="ml-6">
-                  <div className="text-base text-muted-foreground font-medium">{t.date}</div>
-                  <div className="text-lg">{t.label}</div>
-                </div>
-              </li>
-            ))}
-          </ul>
-        </div>
-      </CardContent>
-    </Card>
-  );
-}
+// Update ForecastCard to use patient data
+function ForecastCard({ patient }) {
+  if (!patient?.trendData || patient.trendData.length === 0) {
+    return null;
+  }
+  const forecastData = patient.trendData.slice(20).map((d, i) => ({
+    day: d.day,
+    risk: Math.max(4, Math.min(96, patient.riskScore + i * 2.5 + (i > 6 ? 6 : 0) + Math.sin(i) * 4)),
+  }));
 
-function PopulationView() {
-  return (
-    <div className="grid grid-cols-1 gap-6 lg:grid-cols-3">
-      {/* Network Overview - Visual Impact */}
-      <Card className="rounded-2xl shadow-sm lg:col-span-2">
-        <CardHeader className="pb-4">
-          <CardTitle className="text-xl font-semibold text-foreground flex items-center gap-2"><Users className="h-6 w-6"/>Network Overview</CardTitle>
-        </CardHeader>
-        <CardContent>
-          {/* Big Numbers First */}
-          <div className="grid grid-cols-4 gap-4 mb-6">
-            <div className="text-center">
-              <div className="text-6xl font-bold text-blue-600">4</div>
-              <div className="text-xl text-muted-foreground font-semibold">Premier Hospitals</div>
-            </div>
-            <div className="text-center">
-              <div className="text-6xl font-bold text-emerald-600">1,490</div>
-              <div className="text-xl text-muted-foreground font-semibold">Total Patients</div>
-            </div>
-            <div className="text-center">
-              <div className="text-6xl font-bold text-red-600">181</div>
-              <div className="text-xl text-muted-foreground font-semibold">High Risk</div>
-            </div>
-            <div className="text-center">
-              <div className="text-6xl font-bold text-amber-600">4</div>
-              <div className="text-xl text-muted-foreground font-semibold">Conditions</div>
-            </div>
-          </div>
-
-          {/* Visual Network Diagram */}
-          <div className="relative bg-gradient-to-br from-blue-50 to-indigo-50 rounded-xl p-6 mb-4">
-            <svg width="100%" height="380" viewBox="0 0 700 380" className="overflow-visible">
-              {/* Connection Lines - Animated */}
-              <defs>
-                <linearGradient id="lineGradient" x1="0%" y1="0%" x2="100%" y2="100%">
-                  <stop offset="0%" stopColor="#3b82f6" stopOpacity="0.8"/>
-                  <stop offset="100%" stopColor="#6366f1" stopOpacity="0.5"/>
-                </linearGradient>
-              </defs>
-              
-              <g stroke="url(#lineGradient)" strokeWidth="4" strokeDasharray="10,8">
-                <line x1="350" y1="190" x2="140" y2="100">
-                  <animate attributeName="stroke-dashoffset" values="0;-36" dur="3s" repeatCount="indefinite"/>
-                </line>
-                <line x1="350" y1="190" x2="560" y2="100">
-                  <animate attributeName="stroke-dashoffset" values="0;-36" dur="3s" begin="0.5s" repeatCount="indefinite"/>
-                </line>
-                <line x1="350" y1="190" x2="140" y2="280">
-                  <animate attributeName="stroke-dashoffset" values="0;-36" dur="3s" begin="1s" repeatCount="indefinite"/>
-                </line>
-                <line x1="350" y1="190" x2="560" y2="280">
-                  <animate attributeName="stroke-dashoffset" values="0;-36" dur="3s" begin="1.5s" repeatCount="indefinite"/>
-                </line>
-              </g>
-              
-              {/* Central PhenoMind Hub */}
-              <g>
-                <rect x="270" y="150" width="160" height="80" rx="16" fill="#3b82f6" opacity="0.95" stroke="#1e40af" strokeWidth="3"/>
-                <text x="350" y="180" textAnchor="middle" fill="white" fontSize="20" fontWeight="700">
-                  PhenoMind
-                </text>
-                <text x="350" y="205" textAnchor="middle" fill="white" fontSize="16" fontWeight="600">
-                  Federated AI
-                </text>
-              </g>
-              
-              {/* Hospital Network Nodes */}
-              <g>
-                {/* Mass General Hospital */}
-                <rect x="60" y="60" width="160" height="80" rx="12" fill="#10b981" opacity="0.95" stroke="#059669" strokeWidth="3"/>
-                <text x="140" y="95" textAnchor="middle" fill="white" fontSize="16" fontWeight="700">Mass General</text>
-                <text x="140" y="115" textAnchor="middle" fill="white" fontSize="16" fontWeight="700">Hospital</text>
-                <text x="140" y="165" textAnchor="middle" fill="#1f2937" fontSize="18" fontWeight="700">324 patients</text>
-                
-                {/* Johns Hopkins */}
-                <rect x="480" y="60" width="160" height="80" rx="12" fill="#8b5cf6" opacity="0.95" stroke="#7c3aed" strokeWidth="3"/>
-                <text x="560" y="95" textAnchor="middle" fill="white" fontSize="16" fontWeight="700">Johns Hopkins</text>
-                <text x="560" y="115" textAnchor="middle" fill="white" fontSize="16" fontWeight="700">University</text>
-                <text x="560" y="165" textAnchor="middle" fill="#1f2937" fontSize="18" fontWeight="700">298 patients</text>
-                
-                {/* Mayo Clinic */}
-                <rect x="60" y="240" width="160" height="80" rx="12" fill="#f59e0b" opacity="0.95" stroke="#d97706" strokeWidth="3"/>
-                <text x="140" y="275" textAnchor="middle" fill="white" fontSize="16" fontWeight="700">Mayo Clinic</text>
-                <text x="140" y="295" textAnchor="middle" fill="white" fontSize="16" fontWeight="700">Rochester</text>
-                <text x="140" y="345" textAnchor="middle" fill="#1f2937" fontSize="18" fontWeight="700">412 patients</text>
-                
-                {/* Cleveland Clinic */}
-                <rect x="480" y="240" width="160" height="80" rx="12" fill="#ef4444" opacity="0.95" stroke="#dc2626" strokeWidth="3"/>
-                <text x="560" y="275" textAnchor="middle" fill="white" fontSize="16" fontWeight="700">Cleveland</text>
-                <text x="560" y="295" textAnchor="middle" fill="white" fontSize="16" fontWeight="700">Clinic</text>
-                <text x="560" y="345" textAnchor="middle" fill="#1f2937" fontSize="18" fontWeight="700">256 patients</text>
-              </g>
-            </svg>
-          </div>
-
-          {/* Condition Breakdown with High Risk */}
-          <div className="grid grid-cols-2 gap-4">
-            <div className="flex justify-between items-center p-5 bg-gray-50 rounded-lg">
-              <div>
-                <div className="text-xl font-semibold">Depression</div>
-                <div className="text-lg text-red-600 font-semibold">89 high risk</div>
-              </div>
-              <span className="text-3xl font-bold text-indigo-600">645</span>
-            </div>
-            <div className="flex justify-between items-center p-5 bg-gray-50 rounded-lg">
-              <div>
-                <div className="text-xl font-semibold">Anxiety</div>
-                <div className="text-lg text-red-600 font-semibold">52 high risk</div>
-              </div>
-              <span className="text-3xl font-bold text-indigo-600">423</span>
-            </div>
-            <div className="flex justify-between items-center p-5 bg-gray-50 rounded-lg">
-              <div>
-                <div className="text-xl font-semibold">Bipolar</div>
-                <div className="text-lg text-red-600 font-semibold">47 high risk</div>
-              </div>
-              <span className="text-3xl font-bold text-indigo-600">298</span>
-            </div>
-            <div className="flex justify-between items-center p-5 bg-gray-50 rounded-lg">
-              <div>
-                <div className="text-xl font-semibold">PTSD</div>
-                <div className="text-lg text-red-600 font-semibold">18 high risk</div>
-              </div>
-              <span className="text-3xl font-bold text-indigo-600">124</span>
-            </div>
-          </div>
-        </CardContent>
-      </Card>
-
-      {/* Federated Learning */}
-      <Card className="rounded-2xl shadow-sm">
-        <CardHeader className="pb-4">
-          <CardTitle className="text-xl font-semibold text-foreground flex items-center gap-2"><Lock className="h-6 w-6"/>Federated Learning</CardTitle>
-        </CardHeader>
-        <CardContent className="space-y-5">
-          {/* High Risk Alert */}
-          <div className="bg-red-50 border border-red-200 rounded-lg p-5 mb-5">
-            <div className="flex items-center gap-3 mb-3">
-              <AlertTriangle className="h-7 w-7 text-red-600" />
-              <span className="font-semibold text-red-700 text-xl">High Risk Alert</span>
-            </div>
-            <div className="text-lg text-red-700">
-              <strong>181 patients</strong> across network flagged as high risk for relapse in next 14 days
-            </div>
-          </div>
-
-          <div className="grid grid-cols-2 gap-4">
-            <div className="text-center">
-              <div className="text-4xl font-semibold text-emerald-600">89.7%</div>
-              <div className="text-lg text-muted-foreground">Model Accuracy</div>
-            </div>
-            <div className="text-center">
-              <div className="text-4xl font-semibold text-indigo-600">4</div>
-              <div className="text-lg text-muted-foreground">Active Sites</div>
-            </div>
-          </div>
-          
-          <div className="space-y-4 pt-2">
-            <div className="flex items-center justify-between">
-              <span className="text-xl text-foreground">Privacy level</span>
-              <Badge variant="outline" className="text-lg py-2 px-3">ε = 2.0</Badge>
-            </div>
-            <div className="flex items-center justify-between">
-              <span className="text-xl text-foreground">HIPAA compliance</span>
-              <Badge className="bg-emerald-100 text-emerald-700 text-lg py-2 px-3">Verified</Badge>
-            </div>
-          </div>
-
-          <div className="pt-4">
-            <div className="flex items-center justify-between text-lg text-muted-foreground mb-3">
-              <span>Data sharing</span>
-              <span>Conservative</span>
-            </div>
-            <div className="w-full bg-gray-200 rounded-full h-4">
-              <div className="bg-blue-500 h-4 rounded-full" style={{ width: '35%' }}></div>
-            </div>
-            <p className="text-base text-muted-foreground mt-2">Higher sharing = Better accuracy</p>
-          </div>
-
-          <div className="pt-4 border-t border-gray-100">
-            <p className="text-lg text-muted-foreground">Encrypted model updates shared across sites. Raw patient data never leaves hospitals.</p>
-          </div>
-        </CardContent>
-      </Card>
-    </div>
-  );
-}
-
-function ForecastCard() {
   return (
     <Card className="rounded-2xl shadow-sm">
       <CardHeader className="pb-2">
@@ -424,23 +172,449 @@ function ForecastCard() {
   );
 }
 
-export default function Component() {
-  const [tab, setTab] = useState("patient");
+// Update TrendCard to use patient data
+function TrendCard({ title, dataKey, unit, description, data }) {
+  return (
+    <Card className="rounded-2xl shadow-sm">
+      <CardHeader className="pb-2">
+        <CardTitle className="text-xl font-semibold text-foreground flex items-center gap-2"><LineIcon className="h-6 w-6" />{title}</CardTitle>
+      </CardHeader>
+      <CardContent>
+        <div className="h-40">
+          <ResponsiveContainer width="100%" height="100%">
+            <AreaChart data={data} margin={{ left: 10, right: 10 }}>
+              <defs>
+                <linearGradient id={`g-${String(dataKey)}`} x1="0" y1="0" x2="0" y2="1">
+                  <stop offset="5%" stopOpacity={0.35}/>
+                  <stop offset="95%" stopOpacity={0}/>
+                </linearGradient>
+              </defs>
+              <CartesianGrid strokeDasharray="3 3" />
+              <XAxis dataKey="day" hide />
+              <YAxis hide />
+              <RTooltip 
+                formatter={(v) => `${v}${unit ?? ""}`}
+                contentStyle={{
+                  backgroundColor: '#ffffff',
+                  border: '1px solid #e5e7eb',
+                  borderRadius: '8px',
+                  boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1)',
+                  fontSize: '16px'
+                }}
+              />
+              <Area type="monotone" dataKey={String(dataKey)} strokeWidth={2} fillOpacity={1} fill={`url(#g-${String(dataKey)})`} />
+            </AreaChart>
+          </ResponsiveContainer>
+        </div>
+        {description && <p className="text-base text-muted-foreground mt-2">{description}</p>}
+      </CardContent>
+    </Card>
+  );
+}
+
+// Update AISummary to use patient data
+function AISummary({ patient }) {
+  return (
+    <Card className="rounded-2xl shadow-sm border-emerald-100">
+      <CardHeader className="pb-2">
+        <CardTitle className="text-xl font-semibold text-foreground flex items-center gap-2"><Brain className="h-6 w-6" />AI Summary</CardTitle>
+      </CardHeader>
+      <CardContent className="space-y-3 text-lg">
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-2">
+            <ShieldAlert className="h-6 w-6" />
+            <span className="font-medium">Relapse likelihood (14 days)</span>
+          </div>
+          <RiskChip score={patient.riskScore} />
+        </div>
+        <Progress value={patient.riskScore} className="h-4" />
+        <ul className="list-disc pl-6 text-muted-foreground text-lg space-y-1">
+          <li>Primary drivers: sleep irregularity, reduced HRV, mobility ↓</li>
+          <li>Protective factor: consistent therapy attendance</li>
+        </ul>
+        <div className="pt-2">
+          <Label className="text-base uppercase tracking-wide text-muted-foreground font-semibold">Recommendations</Label>
+          <div className="mt-3 grid grid-cols-1 gap-3 md:grid-cols-2">
+            <Button variant="secondary" className="justify-start text-base py-3"><Stethoscope className="h-6 w-6 mr-2"/>Consider sleep-focused CBT-I referral</Button>
+            <Button variant="secondary" className="justify-start text-base py-3"><Activity className="h-6 w-6 mr-2"/>Review HRV and medication timing</Button>
+          </div>
+        </div>
+      </CardContent>
+    </Card>
+  );
+}
+
+// Update TimelineCard to use patient data
+function TimelineCard({ patient }) {
+  const dot = (t) => t === "alert" ? "bg-rose-500" : t === "med" ? "bg-indigo-500" : t === "visit" ? "bg-emerald-500" : "bg-amber-500";
+  const timeline = patient?.timeline || [];
+  
+  return (
+    <Card className="rounded-2xl shadow-sm">
+      <CardHeader className="pb-2">
+        <CardTitle className="text-xl font-semibold text-foreground flex items-center gap-2"><TrendingUp className="h-6 w-6" />Patient Timeline</CardTitle>
+      </CardHeader>
+      <CardContent>
+        <div className="relative pl-4">
+          <div className="absolute left-4 top-0 bottom-0 w-px bg-muted" />
+          <ul className="space-y-5">
+            {timeline.map((t, i) => (
+              <li key={i} className="relative">
+                <div className={`absolute -left-[8px] top-1 h-4 w-4 rounded-full ${dot(t.type)}`} />
+                <div className="ml-6">
+                  <div className="text-base text-muted-foreground font-medium">{t.date}</div>
+                  <div className="text-lg">{t.label}</div>
+                </div>
+              </li>
+            ))}
+          </ul>
+        </div>
+      </CardContent>
+    </Card>
+  );
+}
+
+// Add EHR Card component
+function EHRCard({ patient }) {
+  const ehr = patient?.ehr;
+  if (!ehr) return null;
+  
+  return (
+    <Card className="rounded-2xl shadow-sm">
+      <CardHeader className="pb-2">
+        <CardTitle className="text-xl font-semibold text-foreground flex items-center gap-2"><Stethoscope className="h-6 w-6" />EHR Summary</CardTitle>
+      </CardHeader>
+      <CardContent className="space-y-4">
+        <div>
+          <Label className="text-sm font-semibold text-muted-foreground">Diagnosis</Label>
+          <p className="text-lg mt-1">{ehr.diagnosis}</p>
+          <p className="text-sm text-muted-foreground">Diagnosed: {ehr.diagnosisDate ? new Date(ehr.diagnosisDate).toLocaleDateString() : 'N/A'}</p>
+        </div>
+        <div>
+          <Label className="text-sm font-semibold text-muted-foreground">Comorbidities</Label>
+          <div className="flex flex-wrap gap-2 mt-1">
+            {(ehr.comorbidities || []).map((c, i) => (
+              <Badge key={i} variant="outline">{c}</Badge>
+            ))}
+          </div>
+        </div>
+        <div>
+          <Label className="text-sm font-semibold text-muted-foreground">Current Medications</Label>
+          <div className="mt-1 space-y-2">
+            {(ehr.medications || []).map((med, i) => (
+              <div key={i} className="text-base">
+                <strong>{med.name}</strong> {med.dose} - {med.frequency}
+              </div>
+            ))}
+          </div>
+        </div>
+        <div className="grid grid-cols-2 gap-4">
+          <div>
+            <Label className="text-sm font-semibold text-muted-foreground">Blood Pressure</Label>
+            <p className="text-lg mt-1">{ehr.bloodPressure || 'N/A'}</p>
+          </div>
+          <div>
+            <Label className="text-sm font-semibold text-muted-foreground">BMI</Label>
+            <p className="text-lg mt-1">{ehr.bmi || 'N/A'}</p>
+          </div>
+        </div>
+        <div>
+          <Label className="text-sm font-semibold text-muted-foreground">Clinical Notes</Label>
+          <p className="text-base mt-1 text-muted-foreground">{ehr.notes || 'No notes available'}</p>
+        </div>
+      </CardContent>
+    </Card>
+  );
+}
+
+// Add Wearables Card component
+function WearablesCard({ patient }) {
+  const wearables = patient?.wearables;
+  if (!wearables) return null;
+  
+  return (
+    <Card className="rounded-2xl shadow-sm">
+      <CardHeader className="pb-2">
+        <CardTitle className="text-xl font-semibold text-foreground flex items-center gap-2"><Activity className="h-6 w-6" />Wearables Data</CardTitle>
+      </CardHeader>
+      <CardContent className="space-y-4">
+        <div>
+          <Label className="text-sm font-semibold text-muted-foreground">Device</Label>
+          <p className="text-lg mt-1">{wearables.device || 'N/A'}</p>
+          <p className="text-sm text-muted-foreground">Last sync: {wearables.lastSync || 'N/A'}</p>
+        </div>
+        <div className="grid grid-cols-2 gap-4">
+          <div>
+            <Label className="text-sm font-semibold text-muted-foreground">Avg Heart Rate</Label>
+            <p className="text-lg mt-1">{wearables.heartRate?.avg || 'N/A'} bpm</p>
+            <p className="text-xs text-muted-foreground">Resting: {wearables.heartRate?.resting || 'N/A'} bpm</p>
+          </div>
+          <div>
+            <Label className="text-sm font-semibold text-muted-foreground">Steps (7d avg)</Label>
+            <p className="text-lg mt-1">{(wearables.steps?.avg || 0).toLocaleString()}</p>
+            <p className="text-xs text-muted-foreground">Goal: {(wearables.steps?.goal || 0).toLocaleString()}</p>
+          </div>
+          <div>
+            <Label className="text-sm font-semibold text-muted-foreground">Sleep (7d avg)</Label>
+            <p className="text-lg mt-1">{wearables.sleep?.avg || 'N/A'}h</p>
+            <p className="text-xs text-muted-foreground">Quality: {wearables.sleep?.quality || 'N/A'}</p>
+          </div>
+          <div>
+            <Label className="text-sm font-semibold text-muted-foreground">HRV (7d avg)</Label>
+            <p className="text-lg mt-1">{wearables.hrv?.avg || 'N/A'} ms</p>
+            <p className="text-xs text-muted-foreground">Baseline: {wearables.hrv?.baseline || 'N/A'} ms</p>
+          </div>
+        </div>
+        <div className="grid grid-cols-2 gap-4">
+          <div>
+            <Label className="text-sm font-semibold text-muted-foreground">Active Minutes</Label>
+            <p className="text-lg mt-1">{wearables.activity?.activeMinutes || 'N/A'} min</p>
+          </div>
+          <div>
+            <Label className="text-sm font-semibold text-muted-foreground">Calories</Label>
+            <p className="text-lg mt-1">{wearables.activity?.calories || 'N/A'} kcal</p>
+          </div>
+        </div>
+      </CardContent>
+    </Card>
+  );
+}
+
+// Keep existing RiskChip and Stat components
+function RiskChip({ score }) {
+  const level = score < 33 ? "Low" : score < 66 ? "Moderate" : "High";
+  const Icon = level === "High" ? ShieldAlert : ShieldCheck;
+  const color = level === "High" ? "bg-red-100 text-red-700" : level === "Moderate" ? "bg-amber-100 text-amber-700" : "bg-emerald-100 text-emerald-700";
+  return (
+    <Badge className={`rounded-full px-5 py-3 ${color} font-semibold text-lg`}> 
+      <Icon className="mr-2 h-6 w-6" />{level} • {Math.round(score)}%
+    </Badge>
+  );
+}
+
+function Stat({ title, value, delta, icon: Icon }) {
+  return (
+    <Card className="rounded-2xl shadow-sm">
+      <CardHeader className="flex flex-row items-center justify-between pb-2">
+        <CardTitle className="text-xl font-semibold text-foreground flex items-center gap-2"><Icon className="h-6 w-6" />{title}</CardTitle>
+        {delta && <span className={`text-lg font-semibold ${delta.startsWith("+") ? "text-emerald-600" : "text-rose-600"}`}>{delta}</span>}
+      </CardHeader>
+      <CardContent>
+        <div className="text-4xl font-semibold text-center">{value}</div>
+      </CardContent>
+    </Card>
+  );
+}
+
+// Population View Component
+function PopulationView() {
+
+  const disorderBreakdown = [
+    { disorder: "Depression", totalPatients: 645, highRisk: 89, networkSites: 4 },
+    { disorder: "Bipolar", totalPatients: 298, highRisk: 47, networkSites: 4 },
+    { disorder: "Anxiety", totalPatients: 423, highRisk: 52, networkSites: 4 },
+    { disorder: "PTSD", totalPatients: 124, highRisk: 18, networkSites: 3 },
+  ];
 
   return (
+    <div className="grid grid-cols-1 gap-6 lg:grid-cols-3">
+      <Card className="rounded-2xl shadow-sm lg:col-span-2">
+        <CardHeader className="pb-4">
+          <CardTitle className="text-xl font-semibold text-foreground flex items-center gap-2"><Users className="h-6 w-6"/>Network Overview</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <div className="grid grid-cols-4 gap-4 mb-6">
+            <div className="text-center">
+              <div className="text-6xl font-bold text-blue-600">4</div>
+              <div className="text-xl text-muted-foreground font-semibold">Premier Hospitals</div>
+            </div>
+            <div className="text-center">
+              <div className="text-6xl font-bold text-emerald-600">1,490</div>
+              <div className="text-xl text-muted-foreground font-semibold">Total Patients</div>
+            </div>
+            <div className="text-center">
+              <div className="text-6xl font-bold text-red-600">181</div>
+              <div className="text-xl text-muted-foreground font-semibold">High Risk</div>
+            </div>
+            <div className="text-center">
+              <div className="text-6xl font-bold text-amber-600">4</div>
+              <div className="text-xl text-muted-foreground font-semibold">Conditions</div>
+            </div>
+          </div>
+          <div className="grid grid-cols-2 gap-4">
+            {disorderBreakdown.map((d, i) => (
+              <div key={i} className="flex justify-between items-center p-5 bg-gray-50 rounded-lg">
+                <div>
+                  <div className="text-xl font-semibold">{d.disorder}</div>
+                  <div className="text-lg text-red-600 font-semibold">{d.highRisk} high risk</div>
+                </div>
+                <span className="text-3xl font-bold text-indigo-600">{d.totalPatients}</span>
+              </div>
+            ))}
+          </div>
+        </CardContent>
+      </Card>
+      <Card className="rounded-2xl shadow-sm">
+        <CardHeader className="pb-4">
+          <CardTitle className="text-xl font-semibold text-foreground flex items-center gap-2"><Lock className="h-6 w-6"/>Federated Learning</CardTitle>
+        </CardHeader>
+        <CardContent className="space-y-5">
+          <div className="bg-red-50 border border-red-200 rounded-lg p-5 mb-5">
+            <div className="flex items-center gap-3 mb-3">
+              <AlertTriangle className="h-7 w-7 text-red-600" />
+              <span className="font-semibold text-red-700 text-xl">High Risk Alert</span>
+            </div>
+            <div className="text-lg text-red-700">
+              <strong>181 patients</strong> across network flagged as high risk for relapse in next 14 days
+            </div>
+          </div>
+          <div className="grid grid-cols-2 gap-4">
+            <div className="text-center">
+              <div className="text-4xl font-semibold text-emerald-600">89.7%</div>
+              <div className="text-lg text-muted-foreground">Model Accuracy</div>
+            </div>
+            <div className="text-center">
+              <div className="text-4xl font-semibold text-indigo-600">4</div>
+              <div className="text-lg text-muted-foreground">Active Sites</div>
+            </div>
+          </div>
+        </CardContent>
+      </Card>
+    </div>
+  );
+}
+
+export default function Component() {
+  const [tab, setTab] = useState("patient");
+  const [selectedPatientId, setSelectedPatientId] = useState(1);
+  const [searchQuery, setSearchQuery] = useState("");
+  const [patients, setPatients] = useState([]);
+  const [selectedPatient, setSelectedPatient] = useState(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
+
+  const loadPatients = useCallback(async () => {
+    try {
+      setLoading(true);
+      setError(null);
+      console.log('[Dashboard] Loading patients...');
+      const data = await apiService.getAllPatients();
+      console.log('[Dashboard] Patients loaded:', data.length);
+      setPatients(data);
+      
+      // If no patient selected yet, select first one
+      if (data.length > 0 && !selectedPatientId) {
+        setSelectedPatientId(data[0].id);
+      } else if (data.length === 0) {
+        setError('No patients found in database. Run the migration script to add patient data.');
+      }
+    } catch (err) {
+      console.error('Failed to load patients:', err);
+      const errorMessage = err.message.includes('Failed to fetch') || err.message.includes('NetworkError')
+        ? 'Cannot connect to backend server. Make sure Flask is running on http://localhost:5000'
+        : `Failed to load patients: ${err.message}`;
+      setError(errorMessage);
+      // Fallback to empty array
+      setPatients([]);
+    } finally {
+      setLoading(false);
+    }
+  }, []);
+
+  // Load patients on component mount
+  useEffect(() => {
+    loadPatients();
+  }, [loadPatients]);
+
+  // Load selected patient when ID changes
+  useEffect(() => {
+    if (selectedPatientId && patients.length > 0) {
+      loadPatient(selectedPatientId);
+    }
+  }, [selectedPatientId, patients]);
+
+  const loadPatient = async (id) => {
+    try {
+      const patient = await apiService.getPatientById(id);
+      setSelectedPatient(patient);
+    } catch (err) {
+      console.error('Failed to load patient:', err);
+      setError(`Failed to load patient ${id}`);
+    }
+  };
+
+  // Filter patients based on search query
+  const filteredPatients = patients.filter(p => 
+    p.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+    p.disorder.toLowerCase().includes(searchQuery.toLowerCase()) ||
+    p.disorderFull.toLowerCase().includes(searchQuery.toLowerCase())
+  );
+
+  // Calculate stats from patient data
+  const avgSleep = selectedPatient?.trendData?.slice(-7).reduce((sum, d) => sum + d.sleep, 0) / 7 || 0;
+  const avgHRV = selectedPatient?.trendData?.slice(-7).reduce((sum, d) => sum + d.hrv, 0) / 7 || 0;
+  const avgActivity = selectedPatient?.trendData?.slice(-7).reduce((sum, d) => sum + d.activity, 0) / 7 || 0;
+
+  // Show loading state
+  if (loading && !selectedPatient) {
+    return (
+      <div className="flex h-screen items-center justify-center">
+        <div className="text-center">
+          <div className="text-2xl font-semibold mb-2">Loading...</div>
+          <div className="text-muted-foreground">Fetching patient data</div>
+        </div>
+      </div>
+    );
+  }
+
+  // Show error state
+  if (error && patients.length === 0) {
+    return (
+      <div className="flex h-screen items-center justify-center">
+        <div className="text-center max-w-md">
+          <div className="text-2xl font-semibold mb-2 text-red-600">Error</div>
+          <div className="text-muted-foreground mb-4">{error}</div>
+          <Button onClick={loadPatients}>Retry</Button>
+          <div className="mt-4 text-sm text-muted-foreground">
+            Make sure the Flask backend is running on http://localhost:5000
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  // Show message if no patients
+  if (!selectedPatient && patients.length === 0) {
+    return (
+      <div className="flex h-screen items-center justify-center">
+        <div className="text-center">
+          <div className="text-2xl font-semibold mb-2">No patients found</div>
+          <div className="text-muted-foreground">Run the migration script to populate the database</div>
+        </div>
+      </div>
+    );
+  }
+
+  return (
+    <div className="flex h-screen overflow-hidden bg-gray-50">
+      {/* Sidebar */}
+      <PatientSidebar
+        patients={patients}
+        selectedPatientId={selectedPatientId}
+        onPatientSelect={setSelectedPatientId}
+        searchQuery={searchQuery}
+        setSearchQuery={setSearchQuery}
+        filteredPatients={filteredPatients}
+      />
+
+      {/* Main Content */}
+      <div className="flex-1 ml-80 overflow-y-auto">
     <div className="p-8 md:p-12 space-y-8">
       {/* Header */}
       <div className="flex items-center justify-between">
-        <div className="flex items-center gap-4">
-          <img 
-            src="/logo.png" 
-            alt="PhenoMind Logo" 
-            className="h-12 w-12 object-contain"
-          />
           <motion.div initial={{ opacity: 0, y: -6 }} animate={{ opacity: 1, y: 0 }} className="text-3xl font-semibold">
             PhenoMind Clinician Dashboard
           </motion.div>
-        </div>
       </div>
 
       <Tabs value={tab} onValueChange={setTab} className="w-full">
@@ -452,28 +626,38 @@ export default function Component() {
 
         {/* Patient tab */}
         <TabsContent value="patient" className="space-y-8 pt-6">
-          <PatientHeader />
+              {selectedPatient && <PatientHeader patient={selectedPatient} />}
 
+          {selectedPatient && (
+            <>
           {/* Top stats */}
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
-            <Stat title="Depression Risk Level" value={<RiskChip score={58} />} icon={ShieldAlert} />
-            <Stat title="Avg Sleep (7d)" value={`6.3 h`} delta="-0.8h" icon={CalIcon} />
-            <Stat title="Heart Rate Variability (HRV) (7d)" value={`42 ms`} delta="-5 ms" icon={Activity} />
-            <Stat title="Activity (7d)" value={`6,120 steps`} delta="-18%" icon={TrendingUp} />
+                <Stat title={`${selectedPatient.disorder} Risk Level`} value={<RiskChip score={selectedPatient.riskScore} />} icon={ShieldAlert} />
+            <Stat title="Avg Sleep (7d)" value={`${avgSleep.toFixed(1)} h`} delta="-0.8h" icon={CalIcon} />
+            <Stat title="Heart Rate Variability (HRV) (7d)" value={`${Math.round(avgHRV)} ms`} delta="-5 ms" icon={Activity} />
+            <Stat title="Activity (7d)" value={`${Math.round(avgActivity).toLocaleString()} steps`} delta="-18%" icon={TrendingUp} />
           </div>
 
           {/* Trends */}
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-            <TrendCard title="Mood (self-report)" dataKey="mood" />
-            <TrendCard title="Sleep duration" dataKey="sleep" unit=" h" />
-            <TrendCard title="Heart Rate Variability (HRV)" dataKey="hrv" unit=" ms" />
+                <TrendCard title="Mood (self-report)" dataKey="mood" data={selectedPatient.trendData || []} />
+                <TrendCard title="Sleep duration" dataKey="sleep" unit=" h" data={selectedPatient.trendData || []} />
+                <TrendCard title="Heart Rate Variability (HRV)" dataKey="hrv" unit=" ms" data={selectedPatient.trendData || []} />
           </div>
 
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-            <ForecastCard />
-            <AISummary />
-            <TimelineCard />
+            <ForecastCard patient={selectedPatient} />
+            <AISummary patient={selectedPatient} />
+            <TimelineCard patient={selectedPatient} />
           </div>
+
+          {/* EHR and Wearables */}
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+            <EHRCard patient={selectedPatient} />
+            <WearablesCard patient={selectedPatient} />
+          </div>
+            </>
+          )}
         </TabsContent>
 
         {/* Insights tab */}
@@ -514,7 +698,7 @@ export default function Component() {
             </Card>
             <Card className="rounded-2xl shadow-sm">
               <CardHeader className="pb-2">
-                <CardTitle className="text-xl font-semibold text-foreground flex items-center gap-2"><Stethoscope className="h-6 w-6"/>Depression Treatment Scenarios</CardTitle>
+                <CardTitle className="text-xl font-semibold text-foreground flex items-center gap-2"><Stethoscope className="h-6 w-6"/>Treatment Scenarios</CardTitle>
               </CardHeader>
               <CardContent className="space-y-5 text-xl">
                 <div className="flex items-center justify-between">
@@ -549,6 +733,8 @@ export default function Component() {
           <PopulationView />
         </TabsContent>
       </Tabs>
+        </div>
+      </div>
     </div>
   );
 }
