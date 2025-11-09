@@ -1,4 +1,4 @@
-from app import db
+from database import db
 
 class TimelineEvent(db.Model):
     __tablename__ = 'timeline_events'

@@ -1,6 +1,6 @@
 from flask import Blueprint, jsonify
-from app.models import Patient
-from app.services.analytics_service import AnalyticsService
+from models import Patient
+from services.analytics_service import AnalyticsService
 
 analytics_bp = Blueprint('analytics', __name__)
 analytics_service = AnalyticsService()

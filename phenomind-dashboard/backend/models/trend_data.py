@@ -1,4 +1,4 @@
-from app import db
+from database import db
 
 class TrendData(db.Model):
     __tablename__ = 'trend_data'

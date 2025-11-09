@@ -8,8 +8,9 @@ import os
 # Add parent directory to path to import patientData
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..'))
 
-from app import create_app, db
-from app.models import Patient, EHR, Wearable, TimelineEvent, TrendData
+from app import create_app
+from database import db
+from models import Patient, EHR, Wearable, TimelineEvent, TrendData
 
 # Import the patient data
 # Note: This requires the patientData.js to be converted or we'll read it directly

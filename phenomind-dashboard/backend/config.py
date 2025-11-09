@@ -1,12 +1,24 @@
 import os
 from dotenv import load_dotenv
 
-load_dotenv()
+# Load .env from project root (one level up from backend/)
+env_path = os.path.join(os.path.dirname(os.path.dirname(__file__)), '.env')
+load_dotenv(env_path)
 
 class Config:
     """Base configuration"""
+    # Get the base directory
+    basedir = os.path.abspath(os.path.dirname(__file__))
+    instance_path = os.path.join(basedir, 'instance')
+    
+    # Ensure instance directory exists
+    os.makedirs(instance_path, exist_ok=True)
+    
     SECRET_KEY = os.environ.get('SECRET_KEY') or 'dev-secret-key-change-in-production'
-    SQLALCHEMY_DATABASE_URI = os.environ.get('DATABASE_URL') or 'sqlite:///phenomind.db'
+    
+    # Use instance folder for database (Flask convention)
+    default_db_path = os.path.join(instance_path, 'phenomind.db')
+    SQLALCHEMY_DATABASE_URI = os.environ.get('DATABASE_URL') or f'sqlite:///{default_db_path}'
     SQLALCHEMY_TRACK_MODIFICATIONS = False
     CORS_ORIGINS = os.environ.get('CORS_ORIGINS', 'http://localhost:3000').split(',')
 

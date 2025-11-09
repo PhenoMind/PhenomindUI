@@ -1,5 +1,6 @@
-from app import create_app, db
-from app.models import Patient, EHR, Wearable, TimelineEvent, TrendData
+from app import create_app
+from database import db
+from models import Patient, EHR, Wearable, TimelineEvent, TrendData
 
 app = create_app()
 

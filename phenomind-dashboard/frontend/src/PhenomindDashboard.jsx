@@ -212,8 +212,37 @@ function TrendCard({ title, dataKey, unit, description, data }) {
   );
 }
 
-// Update AISummary to use patient data
-function AISummary({ patient }) {
+// Update AISummary to use patient data and analytics
+function AISummary({ patient, analytics }) {
+  const drivers = analytics?.biomarkerDrivers || [];
+  const recommendations = analytics?.recommendations || [];
+  
+  // Generate driver text from analytics
+  const driverText = drivers.length > 0 
+    ? drivers.map(d => {
+        const importance = d.impact || d.importance || 0;
+        const trend = d.direction || d.trend || '';
+        const factor = d.factor || '';
+        const arrow = trend === 'decreasing' ? '↓' : trend === 'increasing' ? '↑' : '';
+        return `${factor} ${arrow} (${Math.round(importance * 100)}% impact)`;
+      }).join(', ')
+    : 'No significant drivers identified';
+  
+  // Get protective factors from patient data
+  const protectiveFactors = [];
+  if (patient?.ehr?.medications?.length > 0) {
+    protectiveFactors.push('consistent medication adherence');
+  }
+  if (patient?.timeline?.some(t => t.type === 'visit')) {
+    protectiveFactors.push('regular therapy attendance');
+  }
+  if (patient?.wearable?.steps_goal && patient?.trendData) {
+    const recentSteps = patient.trendData.slice(-7).reduce((sum, d) => sum + d.activity, 0) / 7;
+    if (recentSteps >= patient.wearable.steps_goal * 0.8) {
+      protectiveFactors.push('maintaining activity goals');
+    }
+  }
+  
   return (
     <Card className="rounded-2xl shadow-sm border-emerald-100">
       <CardHeader className="pb-2">
@@ -229,14 +258,33 @@ function AISummary({ patient }) {
         </div>
         <Progress value={patient.riskScore} className="h-4" />
         <ul className="list-disc pl-6 text-muted-foreground text-lg space-y-1">
-          <li>Primary drivers: sleep irregularity, reduced HRV, mobility ↓</li>
-          <li>Protective factor: consistent therapy attendance</li>
+          <li>Primary drivers: {driverText || 'Analyzing patient data...'}</li>
+          {protectiveFactors.length > 0 && (
+            <li>Protective factor: {protectiveFactors[0]}</li>
+          )}
         </ul>
         <div className="pt-2">
           <Label className="text-base uppercase tracking-wide text-muted-foreground font-semibold">Recommendations</Label>
           <div className="mt-3 grid grid-cols-1 gap-3 md:grid-cols-2">
-            <Button variant="secondary" className="justify-start text-base py-3"><Stethoscope className="h-6 w-6 mr-2"/>Consider sleep-focused CBT-I referral</Button>
-            <Button variant="secondary" className="justify-start text-base py-3"><Activity className="h-6 w-6 mr-2"/>Review HRV and medication timing</Button>
+            {recommendations.slice(0, 4).map((rec, i) => (
+              <Button 
+                key={i} 
+                variant="secondary" 
+                className="justify-start text-base py-3"
+                title={rec.reason}
+              >
+                {rec.type === 'sleep' && <Stethoscope className="h-6 w-6 mr-2"/>}
+                {rec.type === 'hrv' && <Activity className="h-6 w-6 mr-2"/>}
+                {rec.type === 'activity' && <TrendingUp className="h-6 w-6 mr-2"/>}
+                {rec.type === 'risk' && <ShieldAlert className="h-6 w-6 mr-2"/>}
+                {rec.message}
+              </Button>
+            ))}
+            {recommendations.length === 0 && (
+              <Button variant="secondary" className="justify-start text-base py-3" disabled>
+                No specific recommendations at this time
+              </Button>
+            )}
           </div>
         </div>
       </CardContent>
@@ -490,6 +538,7 @@ export default function Component() {
   const [searchQuery, setSearchQuery] = useState("");
   const [patients, setPatients] = useState([]);
   const [selectedPatient, setSelectedPatient] = useState(null);
+  const [patientAnalytics, setPatientAnalytics] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
 
@@ -503,9 +552,7 @@ export default function Component() {
       setPatients(data);
       
       // If no patient selected yet, select first one
-      if (data.length > 0 && !selectedPatientId) {
-        setSelectedPatientId(data[0].id);
-      } else if (data.length === 0) {
+      if (data.length === 0) {
         setError('No patients found in database. Run the migration script to add patient data.');
       }
     } catch (err) {
@@ -526,6 +573,13 @@ export default function Component() {
     loadPatients();
   }, [loadPatients]);
 
+  // Auto-select first patient if none selected and patients are loaded
+  useEffect(() => {
+    if (patients.length > 0 && !selectedPatientId) {
+      setSelectedPatientId(patients[0].id);
+    }
+  }, [patients, selectedPatientId]);
+
   // Load selected patient when ID changes
   useEffect(() => {
     if (selectedPatientId && patients.length > 0) {
@@ -537,6 +591,16 @@ export default function Component() {
     try {
       const patient = await apiService.getPatientById(id);
       setSelectedPatient(patient);
+      
+      // Load patient analytics for AI insights
+      try {
+        const analytics = await apiService.getPatientAnalytics(id);
+        setPatientAnalytics(analytics);
+      } catch (analyticsErr) {
+        console.warn('Failed to load patient analytics:', analyticsErr);
+        // Don't fail the whole load if analytics fail
+        setPatientAnalytics(null);
+      }
     } catch (err) {
       console.error('Failed to load patient:', err);
       setError(`Failed to load patient ${id}`);
@@ -647,7 +711,7 @@ export default function Component() {
 
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
             <ForecastCard patient={selectedPatient} />
-            <AISummary patient={selectedPatient} />
+            <AISummary patient={selectedPatient} analytics={patientAnalytics} />
             <TimelineCard patient={selectedPatient} />
           </div>
 
@@ -662,70 +726,92 @@ export default function Component() {
 
         {/* Insights tab */}
         <TabsContent value="insights" className="space-y-8 pt-6">
-          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-            <Card className="rounded-2xl shadow-sm lg:col-span-2">
-              <CardHeader className="pb-2">
-                <CardTitle className="text-xl font-semibold text-foreground flex items-center gap-2"><Brain className="h-6 w-6"/>Top Biomarker Drivers</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className="h-80">
-                  <ResponsiveContainer width="100%" height="100%">
-                    <BarChart data={[
-                      { f: "Sleep irregularity", w: 0.38, fill: "#dc2626" }, 
-                      { f: "HRV ↓", w: 0.29, fill: "#16a34a" }, 
-                      { f: "Mobility ↓", w: 0.21, fill: "#8b5cf6" }, 
-                      { f: "Screen-time ↑ late", w: 0.12, fill: "#06b6d4" }
-                    ]} layout="vertical" margin={{ left: 10, right: 10, top: 10, bottom: 40 }}>
-                      <CartesianGrid strokeDasharray="3 3" stroke="#e5e7eb" />
-                      <XAxis type="number" domain={[0, 0.5]} tick={{ fontSize: 16, fill: '#6b7280' }} 
-                             label={{ value: 'Importance', position: 'insideBottom', offset: -5, style: { fontSize: '18px', fontWeight: '500', fill: '#374151' } }} />
-                      <YAxis type="category" dataKey="f" width={200} tick={{ fontSize: 18, fontWeight: '500', fill: '#374151' }} />
-                      <RTooltip 
-                        formatter={(v) => `${Math.round(v*100)}% importance`}
-                        contentStyle={{
-                          backgroundColor: '#ffffff',
-                          border: '1px solid #e5e7eb',
-                          borderRadius: '8px',
-                          boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1)',
-                          fontSize: '16px'
-                        }}
-                      />
-                      <Bar dataKey="w" name="Importance" radius={[0, 4, 4, 0]} />
-                    </BarChart>
-                  </ResponsiveContainer>
-                </div>
-              </CardContent>
-            </Card>
-            <Card className="rounded-2xl shadow-sm">
-              <CardHeader className="pb-2">
-                <CardTitle className="text-xl font-semibold text-foreground flex items-center gap-2"><Stethoscope className="h-6 w-6"/>Treatment Scenarios</CardTitle>
-              </CardHeader>
-              <CardContent className="space-y-5 text-xl">
-                <div className="flex items-center justify-between">
-                  <span className="font-medium text-foreground">Continue current plan</span>
-                  <div className="flex items-center gap-2 justify-center">
-                    <Badge variant="secondary" className="text-xl px-5 py-3 font-semibold bg-gray-100 text-gray-700">58% Risk</Badge>
-                    <span className="text-lg font-semibold text-gray-600">(+0%)</span>
+          {selectedPatient && patientAnalytics ? (
+            <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+              <Card className="rounded-2xl shadow-sm lg:col-span-2">
+                <CardHeader className="pb-2">
+                  <CardTitle className="text-xl font-semibold text-foreground flex items-center gap-2"><Brain className="h-6 w-6"/>Top Biomarker Drivers</CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <div className="h-80">
+                    {patientAnalytics.biomarkerDrivers && patientAnalytics.biomarkerDrivers.length > 0 ? (
+                      <ResponsiveContainer width="100%" height="100%">
+                        <BarChart 
+                          data={patientAnalytics.biomarkerDrivers.map(d => {
+                            // Handle both 'importance' and 'impact' field names, and 'trend' vs 'direction'
+                            const importance = d.impact || d.importance || 0;
+                            const trend = d.direction || d.trend || '';
+                            const factor = d.factor || '';
+                            const arrow = trend === 'decreasing' ? '↓' : trend === 'increasing' ? '↑' : '';
+                            
+                            return {
+                              f: `${factor} ${arrow}`,
+                              w: importance,
+                              fill: importance > 0.3 ? "#dc2626" : importance > 0.2 ? "#16a34a" : importance > 0.1 ? "#8b5cf6" : "#06b6d4"
+                            };
+                          })} 
+                          layout="vertical" 
+                          margin={{ left: 10, right: 10, top: 10, bottom: 40 }}
+                        >
+                          <CartesianGrid strokeDasharray="3 3" stroke="#e5e7eb" />
+                          <XAxis type="number" domain={[0, 0.5]} tick={{ fontSize: 16, fill: '#6b7280' }} 
+                                 label={{ value: 'Importance', position: 'insideBottom', offset: -5, style: { fontSize: '18px', fontWeight: '500', fill: '#374151' } }} />
+                          <YAxis type="category" dataKey="f" width={200} tick={{ fontSize: 18, fontWeight: '500', fill: '#374151' }} />
+                          <RTooltip 
+                            formatter={(v) => `${Math.round(v*100)}% importance`}
+                            contentStyle={{
+                              backgroundColor: '#ffffff',
+                              border: '1px solid #e5e7eb',
+                              borderRadius: '8px',
+                              boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1)',
+                              fontSize: '16px'
+                            }}
+                          />
+                          <Bar dataKey="w" name="Importance" radius={[0, 4, 4, 0]} />
+                        </BarChart>
+                      </ResponsiveContainer>
+                    ) : (
+                      <div className="flex items-center justify-center h-full text-muted-foreground">
+                        {patientAnalytics ? 'No biomarker driver data available' : 'Loading biomarker drivers...'}
+                      </div>
+                    )}
                   </div>
-                </div>
-                <div className="flex items-center justify-between">
-                  <span className="font-medium text-foreground">Add CBT-I</span>
-                  <div className="flex items-center gap-2 justify-center">
-                    <Badge className="text-xl px-5 py-3 bg-emerald-100 text-emerald-700 font-semibold">44% Risk</Badge>
-                    <span className="text-lg font-semibold text-emerald-600">(-14%)</span>
-                  </div>
-                </div>
-                <div className="flex items-center justify-between">
-                  <span className="font-medium text-foreground">Adjust dose timing</span>
-                  <div className="flex items-center gap-2 justify-center">
-                    <Badge className="text-xl px-5 py-3 bg-blue-100 text-blue-700 font-semibold">49% Risk</Badge>
-                    <span className="text-lg font-semibold text-blue-600">(-9%)</span>
-                  </div>
-                </div>
-                <p className="text-lg text-muted-foreground mt-6">Depression relapse risk from patient-specific digital twin model.</p>
-              </CardContent>
-            </Card>
-          </div>
+                </CardContent>
+              </Card>
+              <Card className="rounded-2xl shadow-sm">
+                <CardHeader className="pb-2">
+                  <CardTitle className="text-xl font-semibold text-foreground flex items-center gap-2"><Stethoscope className="h-6 w-6"/>Treatment Recommendations</CardTitle>
+                </CardHeader>
+                <CardContent className="space-y-5 text-xl">
+                  {patientAnalytics.recommendations && patientAnalytics.recommendations.length > 0 ? (
+                    patientAnalytics.recommendations.map((rec, i) => (
+                      <div key={i} className="flex items-start gap-3 p-3 rounded-lg bg-muted/50">
+                        <div className="flex-1">
+                          <div className="font-medium text-foreground">{rec.message}</div>
+                          <div className="text-sm text-muted-foreground mt-1">{rec.reason}</div>
+                        </div>
+                        <Badge 
+                          variant={rec.priority === 'critical' ? 'destructive' : rec.priority === 'high' ? 'default' : 'secondary'}
+                          className="text-sm px-3 py-1"
+                        >
+                          {rec.priority}
+                        </Badge>
+                      </div>
+                    ))
+                  ) : (
+                    <div className="text-muted-foreground">No specific recommendations at this time</div>
+                  )}
+                  <p className="text-lg text-muted-foreground mt-6">
+                    {selectedPatient.disorder} relapse risk analysis for {selectedPatient.name}
+                  </p>
+                </CardContent>
+              </Card>
+            </div>
+          ) : (
+            <div className="flex items-center justify-center h-64 text-muted-foreground">
+              {selectedPatient ? 'Loading AI insights...' : 'Select a patient to view AI insights'}
+            </div>
+          )}
         </TabsContent>
 
         {/* Population tab */}
