@@ -231,16 +231,22 @@ The build output will be in `frontend/build/`.
 
 The project is configured for Vercel deployment with a `vercel.json` in the root directory.
 
-**Important Vercel Settings:**
-1. **Root Directory**: Set to project root (PhenomindUI/)
-2. **Build Command**: `cd frontend && npm install && npm run build`
-3. **Output Directory**: `frontend/build`
-4. **Framework Preset**: Create React App
+**Vercel Project Settings:**
+1. **Root Directory**: Leave as default (project root)
+2. **Framework Preset**: Create React App (or let Vercel auto-detect)
+3. The `vercel.json` file handles the build configuration automatically
 
-**Environment Variables in Vercel:**
-- `REACT_APP_API_URL` - Your backend API URL (e.g., `https://your-backend.vercel.app` or your backend URL)
+**Environment Variables in Vercel Dashboard:**
+Add these in your Vercel project settings → Environment Variables:
+- `REACT_APP_API_URL` - Your deployed backend API URL (e.g., `https://your-backend.railway.app` or your backend URL)
 
-**Note:** The backend needs to be deployed separately (e.g., on Heroku, Railway, or another service) and the `REACT_APP_API_URL` should point to that deployed backend URL.
+**Alternative: Set Root Directory to `frontend`**
+If the above doesn't work, you can:
+1. In Vercel Dashboard → Settings → General
+2. Set **Root Directory** to `frontend`
+3. Remove the `cd frontend &&` from build commands in `vercel.json` (or delete `vercel.json` and let Vercel auto-detect)
+
+**Note:** The backend needs to be deployed separately (e.g., on Heroku, Railway, Render, or another service). The `REACT_APP_API_URL` should point to that deployed backend URL.
 
 ## 📖 Documentation
 
