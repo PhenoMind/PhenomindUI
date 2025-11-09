@@ -7,7 +7,7 @@ import { Badge } from "./components/ui/badge.jsx";
 import { Input } from "./components/ui/input.jsx";
 import { Label } from "./components/ui/label.jsx";
 import { Avatar, AvatarFallback, AvatarImage } from "./components/ui/avatar.jsx";
-import { AlertTriangle, Activity, Brain, ShieldCheck, ShieldAlert, Bell, Calendar as CalIcon, Search, TrendingUp, LineChart as LineIcon, Users, Lock, Stethoscope } from "lucide-react";
+import { AlertTriangle, Activity, Brain, ShieldCheck, ShieldAlert, Bell, Calendar as CalIcon, Search, TrendingUp, LineChart as LineIcon, Users, Lock, Stethoscope, MessageCircle, X, Send } from "lucide-react";
 import { LineChart, Line, XAxis, YAxis, Tooltip as RTooltip, CartesianGrid, ResponsiveContainer, AreaChart, Area, BarChart, Bar } from "recharts";
 import { motion } from "framer-motion";
 import apiService from "./services/api.js";
@@ -142,11 +142,14 @@ function ForecastCard({ patient }) {
   }));
 
   return (
-    <Card className="rounded-2xl shadow-sm">
-      <CardHeader className="pb-2">
-        <CardTitle className="text-xl font-semibold text-foreground flex items-center gap-2"><AlertTriangle className="h-6 w-6" />Risk Forecast (next 30 days)</CardTitle>
+    <Card className="rounded-lg shadow-sm border border-gray-200 bg-white overflow-hidden">
+      <CardHeader className="pb-3 border-b border-gray-100">
+        <CardTitle className="text-sm font-medium text-gray-900 flex items-center gap-2">
+          <AlertTriangle className="h-4 w-4 text-gray-400" />
+          Risk Forecast (next 30 days)
+        </CardTitle>
       </CardHeader>
-      <CardContent>
+      <CardContent className="pt-4">
         <div className="h-40">
           <ResponsiveContainer width="100%" height="100%">
             <LineChart data={forecastData}>
@@ -175,11 +178,14 @@ function ForecastCard({ patient }) {
 // Update TrendCard to use patient data
 function TrendCard({ title, dataKey, unit, description, data }) {
   return (
-    <Card className="rounded-2xl shadow-sm">
-      <CardHeader className="pb-2">
-        <CardTitle className="text-xl font-semibold text-foreground flex items-center gap-2"><LineIcon className="h-6 w-6" />{title}</CardTitle>
+    <Card className="rounded-lg shadow-sm border border-gray-200 bg-white overflow-hidden hover:shadow-md transition-all">
+      <CardHeader className="pb-3 border-b border-gray-100">
+        <CardTitle className="text-sm font-medium text-gray-900 flex items-center gap-2">
+          <LineIcon className="h-4 w-4 text-gray-400" />
+          {title}
+        </CardTitle>
       </CardHeader>
-      <CardContent>
+      <CardContent className="pt-4">
         <div className="h-40">
           <ResponsiveContainer width="100%" height="100%">
             <AreaChart data={data} margin={{ left: 10, right: 10 }}>
@@ -244,44 +250,51 @@ function AISummary({ patient, analytics }) {
   }
   
   return (
-    <Card className="rounded-2xl shadow-sm border-emerald-100">
-      <CardHeader className="pb-2">
-        <CardTitle className="text-xl font-semibold text-foreground flex items-center gap-2"><Brain className="h-6 w-6" />AI Summary</CardTitle>
+    <Card className="rounded-lg shadow-sm border border-gray-200 bg-white overflow-hidden">
+      <CardHeader className="pb-3 border-b border-gray-100">
+        <CardTitle className="text-sm font-medium text-gray-900 flex items-center gap-2">
+          <Brain className="h-4 w-4 text-gray-400" />
+          AI Summary
+        </CardTitle>
       </CardHeader>
-      <CardContent className="space-y-3 text-lg">
-        <div className="flex items-center justify-between">
+      <CardContent className="space-y-4 pt-4">
+        <div className="flex items-center justify-between p-3 rounded-lg bg-gray-50 border border-gray-100">
           <div className="flex items-center gap-2">
-            <ShieldAlert className="h-6 w-6" />
-            <span className="font-medium">Relapse likelihood (14 days)</span>
+            <ShieldAlert className="h-4 w-4 text-gray-400" />
+            <span className="text-sm font-medium text-gray-700">Relapse likelihood (14 days)</span>
           </div>
           <RiskChip score={patient.riskScore} />
         </div>
-        <Progress value={patient.riskScore} className="h-4" />
-        <ul className="list-disc pl-6 text-muted-foreground text-lg space-y-1">
-          <li>Primary drivers: {driverText || 'Analyzing patient data...'}</li>
-          {protectiveFactors.length > 0 && (
-            <li>Protective factor: {protectiveFactors[0]}</li>
-          )}
-        </ul>
+        <Progress value={patient.riskScore} className="h-2 bg-gray-100" />
+        <div className="space-y-2 p-3 rounded-lg bg-gray-50 border border-gray-100">
+          <ul className="list-disc pl-5 text-sm text-gray-600 space-y-1.5 leading-relaxed">
+            <li>Primary drivers: <span className="text-gray-900 font-medium">{driverText || 'Analyzing patient data...'}</span></li>
+            {protectiveFactors.length > 0 && (
+              <li className="text-green-700">Protective factor: <span className="text-green-600 font-medium">{protectiveFactors[0]}</span></li>
+            )}
+          </ul>
+        </div>
         <div className="pt-2">
-          <Label className="text-base uppercase tracking-wide text-muted-foreground font-semibold">Recommendations</Label>
-          <div className="mt-3 grid grid-cols-1 gap-3 md:grid-cols-2">
+          <Label className="text-xs uppercase tracking-wider text-gray-500 font-medium mb-2 block">Recommendations</Label>
+          <div className="grid grid-cols-1 gap-2">
             {recommendations.slice(0, 4).map((rec, i) => (
               <Button 
-                key={i} 
-                variant="secondary" 
-                className="justify-start text-base py-3"
+                key={i}
+                variant="outline" 
+                className="justify-start text-sm py-2.5 h-auto bg-white hover:bg-gray-50 border border-gray-200 transition-all w-full text-left"
                 title={rec.reason}
               >
-                {rec.type === 'sleep' && <Stethoscope className="h-6 w-6 mr-2"/>}
-                {rec.type === 'hrv' && <Activity className="h-6 w-6 mr-2"/>}
-                {rec.type === 'activity' && <TrendingUp className="h-6 w-6 mr-2"/>}
-                {rec.type === 'risk' && <ShieldAlert className="h-6 w-6 mr-2"/>}
-                {rec.message}
+                <div className="flex items-center gap-2 w-full">
+                  {rec.type === 'sleep' && <Stethoscope className="h-4 w-4 text-gray-400 flex-shrink-0"/>}
+                  {rec.type === 'hrv' && <Activity className="h-4 w-4 text-gray-400 flex-shrink-0"/>}
+                  {rec.type === 'activity' && <TrendingUp className="h-4 w-4 text-gray-400 flex-shrink-0"/>}
+                  {rec.type === 'risk' && <ShieldAlert className="h-4 w-4 text-gray-400 flex-shrink-0"/>}
+                  <span className="text-gray-700">{rec.message}</span>
+                </div>
               </Button>
             ))}
             {recommendations.length === 0 && (
-              <Button variant="secondary" className="justify-start text-base py-3" disabled>
+              <Button variant="outline" className="justify-start text-sm py-2.5 bg-gray-50 text-gray-400 border-gray-200" disabled>
                 No specific recommendations at this time
               </Button>
             )}
@@ -289,6 +302,188 @@ function AISummary({ patient, analytics }) {
         </div>
       </CardContent>
     </Card>
+  );
+}
+
+// Chatbot Component
+function PatientChatbot({ patient, analytics }) {
+  const [isOpen, setIsOpen] = useState(false);
+  const [messages, setMessages] = useState([]);
+  const [inputValue, setInputValue] = useState("");
+
+  useEffect(() => {
+    // Initialize with welcome message when patient changes
+    if (patient) {
+      setMessages([{
+        id: 1,
+        type: 'bot',
+        text: `Hello! I'm here to help you understand ${patient.name}'s condition and treatment. What would you like to know?`,
+        timestamp: new Date()
+      }]);
+    }
+  }, [patient?.id]);
+
+  const generateResponse = (userMessage) => {
+    const lowerMessage = userMessage.toLowerCase();
+    const patientName = patient?.name || 'the patient';
+    const disorder = patient?.disorderFull || patient?.disorder || 'their condition';
+    const riskScore = patient?.riskScore || 0;
+    const riskLevel = riskScore < 33 ? 'low' : riskScore < 66 ? 'moderate' : 'high';
+
+    // Check for common questions
+    if (lowerMessage.includes('risk') || lowerMessage.includes('relapse')) {
+      return `${patientName} has a ${riskLevel} risk level (${riskScore}%). ` +
+        (analytics?.biomarkerDrivers?.length > 0 
+          ? `Primary concerns include ${analytics.biomarkerDrivers.slice(0, 2).map(d => d.factor).join(' and ')}.`
+          : 'I can provide more details about specific biomarkers if needed.');
+    }
+    
+    if (lowerMessage.includes('sleep')) {
+      const avgSleep = analytics?.averages?.sleep || 0;
+      return `${patientName}'s average sleep is ${avgSleep} hours. ` +
+        (avgSleep < 7 ? 'This is below the recommended 7-8 hours, which may contribute to their risk level.' : 'This is within a healthy range.');
+    }
+    
+    if (lowerMessage.includes('medication') || lowerMessage.includes('med')) {
+      const meds = patient?.ehr?.medications || [];
+      if (meds.length > 0) {
+        return `${patientName} is currently on ${meds.map(m => m.name).join(', ')}. ` +
+          `I can provide more details about dosages and timing if needed.`;
+      }
+      return `I don't have medication information for ${patientName} at the moment.`;
+    }
+    
+    if (lowerMessage.includes('recommendation') || lowerMessage.includes('suggest')) {
+      const recs = analytics?.recommendations || [];
+      if (recs.length > 0) {
+        return `Based on ${patientName}'s data, I recommend: ${recs.slice(0, 2).map(r => r.message).join('. ')}. ` +
+          `These are ${recs[0]?.priority || 'important'} priority items.`;
+      }
+      return `I'm analyzing ${patientName}'s data to provide personalized recommendations.`;
+    }
+    
+    if (lowerMessage.includes('diagnosis') || lowerMessage.includes('condition')) {
+      return `${patientName} has been diagnosed with ${disorder}. ` +
+        `I can provide more details about their treatment plan and progress if needed.`;
+    }
+    
+    if (lowerMessage.includes('trend') || lowerMessage.includes('progress')) {
+      return `I can see ${patientName}'s biomarker trends over time. ` +
+        (analytics?.trends ? 'Would you like to know about specific metrics like sleep, HRV, or activity levels?' : 'Let me analyze their recent data.');
+    }
+    
+    // Default response
+    return `I understand you're asking about ${patientName}. ` +
+      `I can help with information about their risk level, medications, sleep patterns, recommendations, or diagnosis. ` +
+      `What specific aspect would you like to know more about?`;
+  };
+
+  const handleSend = (e) => {
+    e.preventDefault();
+    if (!inputValue.trim() || !patient) return;
+
+    const userMessage = {
+      id: messages.length + 1,
+      type: 'user',
+      text: inputValue,
+      timestamp: new Date()
+    };
+
+    setMessages(prev => [...prev, userMessage]);
+    setInputValue("");
+
+    // Simulate bot thinking
+    setTimeout(() => {
+      const botResponse = {
+        id: messages.length + 2,
+        type: 'bot',
+        text: generateResponse(inputValue),
+        timestamp: new Date()
+      };
+      setMessages(prev => [...prev, botResponse]);
+    }, 500);
+  };
+
+  if (!patient) return null;
+
+  return (
+    <>
+      {/* Floating Button */}
+      <motion.button
+        initial={{ scale: 0 }}
+        animate={{ scale: 1 }}
+        onClick={() => setIsOpen(!isOpen)}
+        className="fixed bottom-6 right-6 z-50 w-14 h-14 rounded-full bg-gray-900 text-white shadow-lg hover:shadow-xl transition-all flex items-center justify-center hover:bg-gray-800"
+      >
+        {isOpen ? <X className="h-6 w-6" /> : <MessageCircle className="h-6 w-6" />}
+      </motion.button>
+
+      {/* Chat Window */}
+      {isOpen && (
+        <motion.div
+          initial={{ opacity: 0, y: 20, scale: 0.95 }}
+          animate={{ opacity: 1, y: 0, scale: 1 }}
+          exit={{ opacity: 0, y: 20, scale: 0.95 }}
+          className="fixed bottom-24 right-6 z-50 w-96 h-[500px] bg-white rounded-lg shadow-2xl border border-gray-200 flex flex-col"
+        >
+          {/* Header */}
+          <div className="px-4 py-3 border-b border-gray-200 bg-gray-50 rounded-t-lg">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-2">
+                <div className="w-2 h-2 rounded-full bg-green-500"></div>
+                <span className="text-sm font-medium text-gray-900">Patient Assistant</span>
+              </div>
+              <button
+                onClick={() => setIsOpen(false)}
+                className="text-gray-400 hover:text-gray-600"
+              >
+                <X className="h-4 w-4" />
+              </button>
+            </div>
+            <p className="text-xs text-gray-500 mt-1">Discussing: {patient.name}</p>
+          </div>
+
+          {/* Messages */}
+          <div className="flex-1 overflow-y-auto p-4 space-y-4">
+            {messages.map((message) => (
+              <div
+                key={message.id}
+                className={`flex ${message.type === 'user' ? 'justify-end' : 'justify-start'}`}
+              >
+                <div
+                  className={`max-w-[80%] rounded-lg px-3 py-2 ${
+                    message.type === 'user'
+                      ? 'bg-gray-900 text-white'
+                      : 'bg-gray-100 text-gray-900'
+                  }`}
+                >
+                  <p className="text-sm leading-relaxed">{message.text}</p>
+                </div>
+              </div>
+            ))}
+          </div>
+
+          {/* Input */}
+          <form onSubmit={handleSend} className="p-4 border-t border-gray-200">
+            <div className="flex gap-2">
+              <Input
+                value={inputValue}
+                onChange={(e) => setInputValue(e.target.value)}
+                placeholder="Ask about the patient..."
+                className="flex-1 text-sm"
+              />
+              <Button
+                type="submit"
+                size="sm"
+                className="bg-gray-900 hover:bg-gray-800 text-white"
+              >
+                <Send className="h-4 w-4" />
+              </Button>
+            </div>
+          </form>
+        </motion.div>
+      )}
+    </>
   );
 }
 
@@ -442,13 +637,26 @@ function RiskChip({ score }) {
 
 function Stat({ title, value, delta, icon: Icon }) {
   return (
-    <Card className="rounded-2xl shadow-sm">
-      <CardHeader className="flex flex-row items-center justify-between pb-2">
-        <CardTitle className="text-xl font-semibold text-foreground flex items-center gap-2"><Icon className="h-6 w-6" />{title}</CardTitle>
-        {delta && <span className={`text-lg font-semibold ${delta.startsWith("+") ? "text-emerald-600" : "text-rose-600"}`}>{delta}</span>}
+    <Card className="rounded-lg shadow-sm border border-gray-200 bg-white overflow-hidden hover:shadow-md transition-all">
+      <CardHeader className="flex flex-row items-center justify-between pb-3 border-b border-gray-100">
+        <CardTitle className="text-sm font-medium text-gray-600 flex items-center gap-2">
+          <Icon className="h-4 w-4 text-gray-400" />
+          {title}
+        </CardTitle>
+        {delta && (
+          <span className={`text-xs font-medium px-2 py-0.5 rounded ${
+            delta.startsWith("+") 
+              ? "text-green-700 bg-green-50" 
+              : "text-red-700 bg-red-50"
+          }`}>
+            {delta}
+          </span>
+        )}
       </CardHeader>
-      <CardContent>
-        <div className="text-4xl font-semibold text-center">{value}</div>
+      <CardContent className="pt-4">
+        <div className="text-2xl font-semibold text-gray-900">
+          {value}
+        </div>
       </CardContent>
     </Card>
   );
@@ -675,18 +883,39 @@ export default function Component() {
       <div className="flex-1 ml-80 overflow-y-auto">
     <div className="p-8 md:p-12 space-y-8">
       {/* Header */}
-      <div className="flex items-center justify-between">
-          <motion.div initial={{ opacity: 0, y: -6 }} animate={{ opacity: 1, y: 0 }} className="text-3xl font-semibold">
+      <div className="flex items-center justify-between mb-6">
+          <motion.div 
+            initial={{ opacity: 0, y: -6 }} 
+            animate={{ opacity: 1, y: 0 }} 
+            className="text-3xl font-semibold text-gray-900"
+          >
             PhenoMind Clinician Dashboard
           </motion.div>
       </div>
 
       <Tabs value={tab} onValueChange={setTab} className="w-full">
-        <TabsList className="grid grid-cols-3 w-full md:w-auto">
-          <TabsTrigger value="patient" className="text-xl py-5 font-semibold">Patient</TabsTrigger>
-          <TabsTrigger value="insights" className="text-xl py-5 font-semibold">AI Insights</TabsTrigger>
-          <TabsTrigger value="population" className="text-xl py-5 font-semibold">Population</TabsTrigger>
-        </TabsList>
+        <div className="border-b border-gray-200 mb-8">
+          <TabsList className="inline-flex h-12 items-center justify-start gap-0 bg-transparent p-0 w-full md:w-auto">
+            <TabsTrigger 
+              value="patient" 
+              className="relative px-6 py-2.5 text-sm font-medium text-gray-500 rounded-none border-b-2 border-transparent data-[state=active]:text-gray-900 data-[state=active]:border-gray-900 data-[state=active]:bg-transparent transition-all duration-200 hover:text-gray-700"
+            >
+              Patient
+            </TabsTrigger>
+            <TabsTrigger 
+              value="insights" 
+              className="relative px-6 py-2.5 text-sm font-medium text-gray-500 rounded-none border-b-2 border-transparent data-[state=active]:text-gray-900 data-[state=active]:border-gray-900 data-[state=active]:bg-transparent transition-all duration-200 hover:text-gray-700"
+            >
+              AI Insights
+            </TabsTrigger>
+            <TabsTrigger 
+              value="population" 
+              className="relative px-6 py-2.5 text-sm font-medium text-gray-500 rounded-none border-b-2 border-transparent data-[state=active]:text-gray-900 data-[state=active]:border-gray-900 data-[state=active]:bg-transparent transition-all duration-200 hover:text-gray-700"
+            >
+              Population
+            </TabsTrigger>
+          </TabsList>
+        </div>
 
         {/* Patient tab */}
         <TabsContent value="patient" className="space-y-8 pt-6">
@@ -728,11 +957,14 @@ export default function Component() {
         <TabsContent value="insights" className="space-y-8 pt-6">
           {selectedPatient && patientAnalytics ? (
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-              <Card className="rounded-2xl shadow-sm lg:col-span-2">
-                <CardHeader className="pb-2">
-                  <CardTitle className="text-xl font-semibold text-foreground flex items-center gap-2"><Brain className="h-6 w-6"/>Top Biomarker Drivers</CardTitle>
+              <Card className="rounded-lg shadow-sm border border-gray-200 bg-white lg:col-span-2 overflow-hidden">
+                <CardHeader className="pb-3 border-b border-gray-100">
+                  <CardTitle className="text-sm font-medium text-gray-900 flex items-center gap-2">
+                    <Brain className="h-4 w-4 text-gray-400"/>
+                    Top Biomarker Drivers
+                  </CardTitle>
                 </CardHeader>
-                <CardContent>
+                <CardContent className="pt-4">
                   <div className="h-80">
                     {patientAnalytics.biomarkerDrivers && patientAnalytics.biomarkerDrivers.length > 0 ? (
                       <ResponsiveContainer width="100%" height="100%">
@@ -767,7 +999,7 @@ export default function Component() {
                               fontSize: '16px'
                             }}
                           />
-                          <Bar dataKey="w" name="Importance" radius={[0, 4, 4, 0]} />
+                          <Bar dataKey="w" name="Importance" radius={[0, 8, 8, 0]} />
                         </BarChart>
                       </ResponsiveContainer>
                     ) : (
@@ -778,32 +1010,49 @@ export default function Component() {
                   </div>
                 </CardContent>
               </Card>
-              <Card className="rounded-2xl shadow-sm">
-                <CardHeader className="pb-2">
-                  <CardTitle className="text-xl font-semibold text-foreground flex items-center gap-2"><Stethoscope className="h-6 w-6"/>Treatment Recommendations</CardTitle>
+              <Card className="rounded-lg shadow-sm border border-gray-200 bg-white overflow-hidden">
+                <CardHeader className="pb-3 border-b border-gray-100">
+                  <CardTitle className="text-sm font-medium text-gray-900 flex items-center gap-2">
+                    <Stethoscope className="h-4 w-4 text-gray-400"/>
+                    Treatment Recommendations
+                  </CardTitle>
                 </CardHeader>
-                <CardContent className="space-y-5 text-xl">
+                <CardContent className="pt-4 space-y-3">
                   {patientAnalytics.recommendations && patientAnalytics.recommendations.length > 0 ? (
-                    patientAnalytics.recommendations.map((rec, i) => (
-                      <div key={i} className="flex items-start gap-3 p-3 rounded-lg bg-muted/50">
-                        <div className="flex-1">
-                          <div className="font-medium text-foreground">{rec.message}</div>
-                          <div className="text-sm text-muted-foreground mt-1">{rec.reason}</div>
-                        </div>
-                        <Badge 
-                          variant={rec.priority === 'critical' ? 'destructive' : rec.priority === 'high' ? 'default' : 'secondary'}
-                          className="text-sm px-3 py-1"
+                    patientAnalytics.recommendations.map((rec, i) => {
+                      const priorityStyles = {
+                        critical: 'text-red-700 bg-red-50 border-red-200',
+                        high: 'text-orange-700 bg-orange-50 border-orange-200',
+                        medium: 'text-blue-700 bg-blue-50 border-blue-200',
+                        low: 'text-gray-700 bg-gray-50 border-gray-200'
+                      };
+                      return (
+                        <div 
+                          key={i} 
+                          className="flex items-start gap-3 p-3 rounded-lg bg-gray-50 border border-gray-100"
                         >
-                          {rec.priority}
-                        </Badge>
-                      </div>
-                    ))
+                          <div className="flex-1">
+                            <div className="font-medium text-gray-900 text-sm mb-1">{rec.message}</div>
+                            <div className="text-xs text-gray-600 leading-relaxed">{rec.reason}</div>
+                          </div>
+                          <Badge 
+                            variant="outline"
+                            className={`text-xs px-2 py-0.5 font-medium border ${priorityStyles[rec.priority] || priorityStyles.medium}`}
+                          >
+                            {rec.priority}
+                          </Badge>
+                        </div>
+                      );
+                    })
                   ) : (
-                    <div className="text-muted-foreground">No specific recommendations at this time</div>
+                    <div className="text-gray-500 text-center py-6 text-sm">No specific recommendations at this time</div>
                   )}
-                  <p className="text-lg text-muted-foreground mt-6">
-                    {selectedPatient.disorder} relapse risk analysis for {selectedPatient.name}
-                  </p>
+                  <div className="mt-4 pt-4 border-t border-gray-100">
+                    <p className="text-xs text-gray-600">
+                      <span className="font-medium text-gray-900">{selectedPatient.disorder}</span> relapse risk analysis for{' '}
+                      <span className="font-medium text-gray-900">{selectedPatient.name}</span>
+                    </p>
+                  </div>
                 </CardContent>
               </Card>
             </div>
@@ -821,6 +1070,9 @@ export default function Component() {
       </Tabs>
         </div>
       </div>
+      
+      {/* Chatbot */}
+      <PatientChatbot patient={selectedPatient} analytics={patientAnalytics} />
     </div>
   );
 }
