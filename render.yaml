@@ -1,0 +1,51 @@
+# render.yaml
+# Place this at the repo root and connect the repo in Render → "New +" → "Blueprint".
+# It will create:
+# - A Flask web service using the /backend directory
+# - A free Postgres database, with DATABASE_URL injected into the service
+
+services:
+  - type: web
+    name: phenomind-backend
+    env: python
+    plan: free
+    rootDir: backend
+    region: oregon            # or "frankfurt", etc.
+    autoDeploy: true
+
+    buildCommand: |
+      pip install --upgrade pip
+      pip install -r requirements.txt
+
+    # Use the one that matches your app entrypoint:
+    # If you have an app factory "create_app()" inside backend/app.py:
+    startCommand: gunicorn -w 2 -k gthread -b 0.0.0.0:$PORT "app:create_app()"
+    # If instead you expose `app` from backend/run.py, comment the line above and use:
+    # startCommand: gunicorn -w 2 -k gthread -b 0.0.0.0:$PORT run:app
+
+    healthCheckPath: /health   # Change or remove if you don't have a health route
+    # If your health endpoint is under /api/health, set that instead:
+    # healthCheckPath: /api/health
+
+    envVars:
+      - key: PYTHONUNBUFFERED
+        value: "1"
+      - key: FLASK_ENV
+        value: production
+      - key: SECRET_KEY
+        generateValue: true
+
+      # Allow your Vercel frontend origin (add Preview domains as needed)
+      - key: CORS_ORIGINS
+        value: https://phenomind-ui.vercel.app
+
+      # Wire in the managed Postgres connection string
+      - key: DATABASE_URL
+        fromDatabase:
+          name: phenomind-db
+          property: connectionString
+
+databases:
+  - name: phenomind-db
+    plan: free
+    postgresMajorVersion: 15
