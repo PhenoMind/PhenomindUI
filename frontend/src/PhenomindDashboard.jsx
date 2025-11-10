@@ -664,13 +664,17 @@ function Stat({ title, value, delta, icon: Icon }) {
 }
 
 // Population View Component
+// Population View Component
 function PopulationView() {
   return (
     <div className="grid grid-cols-1 gap-6 lg:grid-cols-3">
       {/* Network Overview - Visual Impact */}
       <Card className="rounded-2xl shadow-sm lg:col-span-2">
         <CardHeader className="pb-4">
-          <CardTitle className="text-xl font-semibold text-foreground flex items-center gap-2"><Users className="h-6 w-6"/>Network Overview</CardTitle>
+          <CardTitle className="text-xl font-semibold text-foreground flex items-center gap-2">
+            <Users className="h-6 w-6" />
+            Network Overview
+          </CardTitle>
         </CardHeader>
         <CardContent>
           {/* Big Numbers First */}
@@ -703,7 +707,7 @@ function PopulationView() {
                   <stop offset="100%" stopColor="#6366f1" stopOpacity="0.5"/>
                 </linearGradient>
               </defs>
-              
+
               <g stroke="url(#lineGradient)" strokeWidth="4" strokeDasharray="10,8">
                 <line x1="350" y1="190" x2="140" y2="100">
                   <animate attributeName="stroke-dashoffset" values="0;-36" dur="3s" repeatCount="indefinite"/>
@@ -718,18 +722,14 @@ function PopulationView() {
                   <animate attributeName="stroke-dashoffset" values="0;-36" dur="3s" begin="1.5s" repeatCount="indefinite"/>
                 </line>
               </g>
-              
+
               {/* Central PhenoMind Hub */}
               <g>
                 <rect x="270" y="150" width="160" height="80" rx="16" fill="#3b82f6" opacity="0.95" stroke="#1e40af" strokeWidth="3"/>
-                <text x="350" y="180" textAnchor="middle" fill="white" fontSize="20" fontWeight="700">
-                  PhenoMind
-                </text>
-                <text x="350" y="205" textAnchor="middle" fill="white" fontSize="16" fontWeight="600">
-                  Federated AI
-                </text>
+                <text x="350" y="180" textAnchor="middle" fill="white" fontSize="20" fontWeight="700">PhenoMind</text>
+                <text x="350" y="205" textAnchor="middle" fill="white" fontSize="16" fontWeight="600">Federated AI</text>
               </g>
-              
+
               {/* Hospital Network Nodes */}
               <g>
                 {/* Mass General Hospital */}
@@ -737,19 +737,19 @@ function PopulationView() {
                 <text x="140" y="95" textAnchor="middle" fill="white" fontSize="16" fontWeight="700">Mass General</text>
                 <text x="140" y="115" textAnchor="middle" fill="white" fontSize="16" fontWeight="700">Hospital</text>
                 <text x="140" y="165" textAnchor="middle" fill="#1f2937" fontSize="18" fontWeight="700">324 patients</text>
-                
+
                 {/* Johns Hopkins */}
                 <rect x="480" y="60" width="160" height="80" rx="12" fill="#8b5cf6" opacity="0.95" stroke="#7c3aed" strokeWidth="3"/>
                 <text x="560" y="95" textAnchor="middle" fill="white" fontSize="16" fontWeight="700">Johns Hopkins</text>
                 <text x="560" y="115" textAnchor="middle" fill="white" fontSize="16" fontWeight="700">University</text>
                 <text x="560" y="165" textAnchor="middle" fill="#1f2937" fontSize="18" fontWeight="700">298 patients</text>
-                
+
                 {/* Mayo Clinic */}
                 <rect x="60" y="240" width="160" height="80" rx="12" fill="#f59e0b" opacity="0.95" stroke="#d97706" strokeWidth="3"/>
                 <text x="140" y="275" textAnchor="middle" fill="white" fontSize="16" fontWeight="700">Mayo Clinic</text>
                 <text x="140" y="295" textAnchor="middle" fill="white" fontSize="16" fontWeight="700">Rochester</text>
                 <text x="140" y="345" textAnchor="middle" fill="#1f2937" fontSize="18" fontWeight="700">412 patients</text>
-                
+
                 {/* Cleveland Clinic */}
                 <rect x="480" y="240" width="160" height="80" rx="12" fill="#ef4444" opacity="0.95" stroke="#dc2626" strokeWidth="3"/>
                 <text x="560" y="275" textAnchor="middle" fill="white" fontSize="16" fontWeight="700">Cleveland</text>
@@ -789,6 +789,70 @@ function PopulationView() {
               </div>
               <span className="text-3xl font-bold text-indigo-600">124</span>
             </div>
+          </div>
+        </CardContent>
+      </Card>
+
+      {/* Federated Learning (right column) */}
+      <Card className="rounded-2xl shadow-sm">
+        <CardHeader className="pb-4">
+          <CardTitle className="text-xl font-semibold text-foreground flex items-center gap-2">
+            <Lock className="h-6 w-6" />
+            Federated Learning
+          </CardTitle>
+        </CardHeader>
+        <CardContent className="space-y-5">
+          {/* High Risk Alert */}
+          <div className="bg-red-50 border border-red-200 rounded-lg p-5 mb-5">
+            <div className="flex items-center gap-3 mb-3">
+              <AlertTriangle className="h-7 w-7 text-red-600" />
+              <span className="font-semibold text-red-700 text-xl">High Risk Alert</span>
+            </div>
+            <div className="text-lg text-red-700">
+              <strong>181 patients</strong> across network flagged as high risk for relapse in next 14 days
+            </div>
+          </div>
+
+          {/* KPIs */}
+          <div className="grid grid-cols-2 gap-4">
+            <div className="text-center">
+              <div className="text-4xl font-semibold text-emerald-600">89.7%</div>
+              <div className="text-lg text-muted-foreground">Model Accuracy</div>
+            </div>
+            <div className="text-center">
+              <div className="text-4xl font-semibold text-indigo-600">4</div>
+              <div className="text-lg text-muted-foreground">Active Sites</div>
+            </div>
+          </div>
+
+          {/* Compliance / Privacy */}
+          <div className="space-y-4 pt-2">
+            <div className="flex items-center justify-between">
+              <span className="text-xl text-foreground">Privacy level</span>
+              <Badge variant="outline" className="text-lg py-2 px-3">ε = 2.0</Badge>
+            </div>
+            <div className="flex items-center justify-between">
+              <span className="text-xl text-foreground">HIPAA compliance</span>
+              <Badge className="bg-emerald-100 text-emerald-700 text-lg py-2 px-3">Verified</Badge>
+            </div>
+          </div>
+
+          {/* Data sharing control (static for now) */}
+          <div className="pt-4">
+            <div className="flex items-center justify-between text-lg text-muted-foreground mb-3">
+              <span>Data sharing</span>
+              <span>Conservative</span>
+            </div>
+            <div className="w-full bg-gray-200 rounded-full h-4">
+              <div className="h-4 rounded-full bg-blue-500" style={{ width: '35%' }} />
+            </div>
+            <p className="text-base text-muted-foreground mt-2">Higher sharing = Better accuracy</p>
+          </div>
+
+          <div className="pt-4 border-t border-gray-100">
+            <p className="text-lg text-muted-foreground">
+              Encrypted model updates shared across sites. Raw patient data never leaves hospitals.
+            </p>
           </div>
         </CardContent>
       </Card>
