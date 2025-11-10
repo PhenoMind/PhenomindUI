@@ -7,7 +7,7 @@ import { Badge } from "./components/ui/badge.jsx";
 import { Input } from "./components/ui/input.jsx";
 import { Label } from "./components/ui/label.jsx";
 import { Avatar, AvatarFallback, AvatarImage } from "./components/ui/avatar.jsx";
-import { AlertTriangle, Activity, Brain, ShieldCheck, ShieldAlert, Bell, Calendar as CalIcon, Search, TrendingUp, LineChart as LineIcon, Users, Lock, Stethoscope, MessageCircle, X, Send } from "lucide-react";
+import { AlertTriangle, Activity, Brain, ShieldCheck, ShieldAlert, Bell, Calendar as CalIcon, Search, TrendingUp, LineChart as LineIcon, Users, Lock, Stethoscope, MessageCircle, X, Send, Moon, Heart, CheckCircle, Lightbulb } from "lucide-react";
 import { LineChart, Line, XAxis, YAxis, Tooltip as RTooltip, CartesianGrid, ResponsiveContainer, AreaChart, Area, BarChart, Bar } from "recharts";
 import { motion } from "framer-motion";
 import apiService from "./services/api.js";
@@ -1155,111 +1155,279 @@ export default function Component() {
         </TabsContent>
 
         {/* Insights tab */}
-        <TabsContent value="insights" className="space-y-8 pt-6">
+        <TabsContent value="insights" className="space-y-6 pt-6">
           {selectedPatient && patientAnalytics ? (
-            <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-              <Card className="rounded-lg shadow-sm border border-gray-200 bg-white lg:col-span-2 overflow-hidden">
-                <CardHeader className="pb-3 border-b border-gray-100">
-                  <CardTitle className="text-sm font-medium text-gray-900 flex items-center gap-2">
-                    <Brain className="h-4 w-4 text-gray-400"/>
-                    Top Biomarker Drivers
-                  </CardTitle>
-                </CardHeader>
-                <CardContent className="pt-4">
-                  <div className="h-80">
-                    {patientAnalytics.biomarkerDrivers && patientAnalytics.biomarkerDrivers.length > 0 ? (
-                      <ResponsiveContainer width="100%" height="100%">
-                        <BarChart 
-                          data={patientAnalytics.biomarkerDrivers.map(d => {
-                            // Handle both 'importance' and 'impact' field names, and 'trend' vs 'direction'
-                            const importance = d.impact || d.importance || 0;
-                            const trend = d.direction || d.trend || '';
-                            const factor = d.factor || '';
-                            const arrow = trend === 'decreasing' ? '↓' : trend === 'increasing' ? '↑' : '';
-                            
-                            return {
-                              f: `${factor} ${arrow}`,
-                              w: importance,
-                              fill: importance > 0.3 ? "#dc2626" : importance > 0.2 ? "#16a34a" : importance > 0.1 ? "#8b5cf6" : "#06b6d4"
-                            };
-                          })} 
-                          layout="vertical" 
-                          margin={{ left: 10, right: 10, top: 10, bottom: 40 }}
-                        >
-                          <CartesianGrid strokeDasharray="3 3" stroke="#e5e7eb" />
-                          <XAxis type="number" domain={[0, 0.5]} tick={{ fontSize: 16, fill: '#6b7280' }} 
-                                 label={{ value: 'Importance', position: 'insideBottom', offset: -5, style: { fontSize: '18px', fontWeight: '500', fill: '#374151' } }} />
-                          <YAxis type="category" dataKey="f" width={200} tick={{ fontSize: 18, fontWeight: '500', fill: '#374151' }} />
-                          <RTooltip 
-                            formatter={(v) => `${Math.round(v*100)}% importance`}
-                            contentStyle={{
-                              backgroundColor: '#ffffff',
-                              border: '1px solid #e5e7eb',
-                              borderRadius: '8px',
-                              boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1)',
-                              fontSize: '16px'
-                            }}
+            <div className="space-y-6">
+              {/* Risk Score Header - Prominent Display */}
+              <Card className={`border-2 ${(() => {
+                const score = patientAnalytics.riskScore || 0;
+                if (score >= 75) return 'text-red-600 bg-red-50 border-red-200';
+                if (score >= 66) return 'text-orange-600 bg-orange-50 border-orange-200';
+                if (score >= 33) return 'text-yellow-600 bg-yellow-50 border-yellow-200';
+                return 'text-green-600 bg-green-50 border-green-200';
+              })()}`}>
+                <CardContent className="p-6">
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <div className="text-sm font-medium uppercase tracking-wide opacity-75 mb-1">
+                        Current Risk Assessment
+                      </div>
+                      <div className="flex items-baseline gap-3">
+                        <span className="text-5xl font-bold">{patientAnalytics.riskScore || 0}%</span>
+                        <span className="text-xl font-semibold">{(() => {
+                          const score = patientAnalytics.riskScore || 0;
+                          if (score >= 75) return 'Critical Risk';
+                          if (score >= 66) return 'High Risk';
+                          if (score >= 33) return 'Moderate Risk';
+                          return 'Low Risk';
+                        })()}</span>
+                      </div>
+                    </div>
+                    <div className="text-right">
+                      <div className="text-sm opacity-75 mb-1">Risk Level</div>
+                      <div className="w-32 h-32">
+                        <svg viewBox="0 0 100 100" className="transform -rotate-90">
+                          <circle
+                            cx="50"
+                            cy="50"
+                            r="40"
+                            fill="none"
+                            stroke="currentColor"
+                            strokeWidth="8"
+                            opacity="0.2"
                           />
-                          <Bar dataKey="w" name="Importance" radius={[0, 8, 8, 0]} />
-                        </BarChart>
-                      </ResponsiveContainer>
+                          <circle
+                            cx="50"
+                            cy="50"
+                            r="40"
+                            fill="none"
+                            stroke="currentColor"
+                            strokeWidth="8"
+                            strokeDasharray={`${(patientAnalytics.riskScore || 0) * 2.51} 251`}
+                            strokeLinecap="round"
+                          />
+                        </svg>
+                      </div>
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+
+              <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                {/* Risk Attribution Section */}
+                <Card className="rounded-lg shadow-sm border border-gray-200 bg-white overflow-hidden">
+                  <CardHeader className="pb-3 border-b border-gray-100">
+                    <CardTitle className="text-lg font-semibold text-gray-900 mb-1">Risk Attribution</CardTitle>
+                    <p className="text-sm text-gray-600">
+                      What's contributing to this patient's {patientAnalytics.riskScore || 0}% risk score?
+                    </p>
+                  </CardHeader>
+                  <CardContent className="pt-6">
+                    {patientAnalytics.biomarkerDrivers && patientAnalytics.biomarkerDrivers.length > 0 ? (
+                      <div className="space-y-4">
+                        {patientAnalytics.biomarkerDrivers.map((driver, index) => {
+                          const riskPoints = (driver.importance * (patientAnalytics.riskScore || 0)).toFixed(0);
+                          const barWidth = `${driver.importance * 100}%`;
+                          const barColor = driver.importance > 0.4 ? 'bg-red-500' : 
+                                         driver.importance > 0.25 ? 'bg-orange-500' : 'bg-yellow-500';
+                          
+                          return (
+                            <div key={index} className="p-4 bg-gray-50 rounded-lg border border-gray-200">
+                              {/* Driver header */}
+                              <div className="flex items-center justify-between mb-2">
+                                <div className="flex items-center gap-2">
+                                  {(driver.factor?.toLowerCase().includes('sleep') || driver.displayName?.toLowerCase().includes('sleep')) && 
+                                    <Moon className="w-4 h-4 text-gray-600" />}
+                                  {(driver.factor?.toLowerCase().includes('hrv') || driver.displayName?.toLowerCase().includes('hrv') || 
+                                    driver.displayName?.toLowerCase().includes('heart')) && 
+                                    <Heart className="w-4 h-4 text-gray-600" />}
+                                  {(driver.factor?.toLowerCase().includes('activity') || driver.factor?.toLowerCase().includes('mobility') || 
+                                    driver.displayName?.toLowerCase().includes('activity')) && 
+                                    <Activity className="w-4 h-4 text-gray-600" />}
+                                  <span className="font-medium text-gray-900">
+                                    {driver.displayName || driver.factor?.replace(/↓+/g, '').trim()}
+                                  </span>
+                                </div>
+                                <span className="text-sm font-semibold text-red-600">
+                                  {riskPoints} risk points
+                                </span>
+                              </div>
+                              
+                              {/* Progress bar */}
+                              <div className="w-full bg-gray-200 rounded-full h-3 mb-2">
+                                <div 
+                                  className={`${barColor} h-3 rounded-full transition-all duration-500`}
+                                  style={{ width: barWidth }}
+                                />
+                              </div>
+                              
+                              {/* Context information */}
+                              <div className="flex flex-col gap-1">
+                                <div className="text-xs text-gray-600">
+                                  {driver.context || `Currently: ${driver.current}`}
+                                </div>
+                                {driver.percentChange && (
+                                  <div className={`text-xs font-medium ${driver.percentChange < 0 ? 'text-red-600' : 'text-green-600'}`}>
+                                    {driver.percentChange > 0 ? '+' : ''}{driver.percentChange.toFixed(0)}% from baseline
+                                  </div>
+                                )}
+                              </div>
+                            </div>
+                          );
+                        })}
+                      </div>
                     ) : (
-                      <div className="flex items-center justify-center h-full text-muted-foreground">
-                        {patientAnalytics ? 'No biomarker driver data available' : 'Loading biomarker drivers...'}
+                      <div className="text-center py-8 text-gray-500">
+                        <Activity className="w-12 h-12 mx-auto mb-2 opacity-30" />
+                        <p>No biomarker drivers identified</p>
                       </div>
                     )}
-                  </div>
-                </CardContent>
-              </Card>
-              <Card className="rounded-lg shadow-sm border border-gray-200 bg-white overflow-hidden">
-                <CardHeader className="pb-3 border-b border-gray-100">
-                  <CardTitle className="text-sm font-medium text-gray-900 flex items-center gap-2">
-                    <Stethoscope className="h-4 w-4 text-gray-400"/>
-                    Treatment Recommendations
-                  </CardTitle>
-                </CardHeader>
-                <CardContent className="pt-4 space-y-3">
-                  {patientAnalytics.recommendations && patientAnalytics.recommendations.length > 0 ? (
-                    patientAnalytics.recommendations.map((rec, i) => {
-                      const priorityStyles = {
-                        critical: 'text-red-700 bg-red-50 border-red-200',
-                        high: 'text-orange-700 bg-orange-50 border-orange-200',
-                        medium: 'text-blue-700 bg-blue-50 border-blue-200',
-                        low: 'text-gray-700 bg-gray-50 border-gray-200'
-                      };
-                      return (
-                        <div 
-                          key={i} 
-                          className="flex items-start gap-3 p-3 rounded-lg bg-gray-50 border border-gray-100"
-                        >
-                          <div className="flex-1">
-                            <div className="font-medium text-gray-900 text-sm mb-1">{rec.message}</div>
-                            <div className="text-xs text-gray-600 leading-relaxed">{rec.reason}</div>
-                          </div>
-                          <Badge 
-                            variant="outline"
-                            className={`text-xs px-2 py-0.5 font-medium border ${priorityStyles[rec.priority] || priorityStyles.medium}`}
-                          >
-                            {rec.priority}
-                          </Badge>
-                        </div>
-                      );
-                    })
-                  ) : (
-                    <div className="text-gray-500 text-center py-6 text-sm">No specific recommendations at this time</div>
-                  )}
-                  <div className="mt-4 pt-4 border-t border-gray-100">
-                    <p className="text-xs text-gray-600">
-                      <span className="font-medium text-gray-900">{selectedPatient.disorder}</span> relapse risk analysis for{' '}
-                      <span className="font-medium text-gray-900">{selectedPatient.name}</span>
+                  </CardContent>
+                </Card>
+
+                {/* Treatment Recommendations Section */}
+                <Card className="rounded-lg shadow-sm border border-gray-200 bg-white overflow-hidden">
+                  <CardHeader className="pb-3 border-b border-gray-100">
+                    <CardTitle className="text-lg font-semibold text-gray-900 mb-1 flex items-center gap-2">
+                      <Lightbulb className="h-5 w-5 text-gray-400" />
+                      Clinical Recommendations
+                    </CardTitle>
+                    <p className="text-sm text-gray-600">
+                      {patientAnalytics.recommendations?.length || 0} personalized interventions
                     </p>
-                  </div>
-                </CardContent>
-              </Card>
+                  </CardHeader>
+                  <CardContent className="pt-4">
+                    {patientAnalytics.recommendations && patientAnalytics.recommendations.length > 0 ? (
+                      <div 
+                        className="space-y-3 overflow-y-auto pr-2" 
+                        style={{ maxHeight: '520px' }}
+                      >
+                        <style>{`
+                          .recommendations-scroll::-webkit-scrollbar {
+                            width: 6px;
+                          }
+                          .recommendations-scroll::-webkit-scrollbar-track {
+                            background: #f1f1f1;
+                            border-radius: 10px;
+                          }
+                          .recommendations-scroll::-webkit-scrollbar-thumb {
+                            background: #cbd5e0;
+                            border-radius: 10px;
+                          }
+                          .recommendations-scroll::-webkit-scrollbar-thumb:hover {
+                            background: #a0aec0;
+                          }
+                        `}</style>
+                        {patientAnalytics.recommendations.map((rec, index) => {
+                          const priorityColors = {
+                            critical: 'bg-red-100 text-red-800 border-red-300',
+                            high: 'bg-orange-100 text-orange-800 border-orange-300',
+                            medium: 'bg-yellow-100 text-yellow-800 border-yellow-300',
+                            low: 'bg-green-100 text-green-800 border-green-300'
+                          };
+                          
+                          const priorityIcons = {
+                            critical: <AlertTriangle className="w-5 h-5" />,
+                            high: <AlertTriangle className="w-5 h-5" />,
+                            medium: <Activity className="w-5 h-5" />,
+                            low: <CheckCircle className="w-5 h-5" />
+                          };
+                          
+                          return (
+                            <div 
+                              key={index} 
+                              className={`p-4 rounded-lg border-2 ${priorityColors[rec.priority] || 'bg-gray-100 text-gray-800 border-gray-300'} transition-all hover:shadow-md`}
+                            >
+                              {/* Recommendation header */}
+                              <div className="flex items-start gap-3 mb-2">
+                                <div className="mt-0.5">
+                                  {priorityIcons[rec.priority]}
+                                </div>
+                                <div className="flex-1">
+                                  <div className="flex items-center gap-2 mb-1">
+                                    <span className="text-xs font-semibold uppercase tracking-wide">
+                                      {rec.priority}
+                                    </span>
+                                    <span className="text-xs px-2 py-0.5 rounded-full bg-white bg-opacity-50">
+                                      {rec.type}
+                                    </span>
+                                  </div>
+                                  <p className="font-semibold text-sm leading-tight">
+                                    {rec.message}
+                                  </p>
+                                </div>
+                              </div>
+                              
+                              {/* Recommendation reason */}
+                              <div className="ml-8">
+                                <p className="text-xs opacity-90 leading-relaxed">
+                                  {rec.reason}
+                                </p>
+                                {rec.action && (
+                                  <div className="mt-2 text-xs font-mono opacity-75">
+                                    Action: {rec.action}
+                                  </div>
+                                )}
+                              </div>
+                            </div>
+                          );
+                        })}
+                      </div>
+                    ) : (
+                      <div className="text-center py-8 text-gray-500">
+                        <CheckCircle className="w-12 h-12 mx-auto mb-2 opacity-30" />
+                        <p>No recommendations at this time</p>
+                        <p className="text-xs mt-1">Patient is maintaining healthy patterns</p>
+                      </div>
+                    )}
+                  </CardContent>
+                </Card>
+              </div>
+
+              {/* Biomarker Averages */}
+              {patientAnalytics.averages && (
+                <Card className="rounded-lg shadow-sm border border-gray-200 bg-white overflow-hidden">
+                  <CardHeader className="pb-3 border-b border-gray-100">
+                    <CardTitle className="text-lg font-semibold text-gray-900">7-Day Averages</CardTitle>
+                  </CardHeader>
+                  <CardContent className="pt-6">
+                    <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                      <div className="text-center p-4 bg-blue-50 rounded-lg">
+                        <Moon className="w-6 h-6 mx-auto mb-2 text-blue-600" />
+                        <div className="text-2xl font-bold text-blue-900">
+                          {patientAnalytics.averages.sleep}h
+                        </div>
+                        <div className="text-xs text-blue-700">Sleep</div>
+                      </div>
+                      <div className="text-center p-4 bg-purple-50 rounded-lg">
+                        <Heart className="w-6 h-6 mx-auto mb-2 text-purple-600" />
+                        <div className="text-2xl font-bold text-purple-900">
+                          {patientAnalytics.averages.hrv}ms
+                        </div>
+                        <div className="text-xs text-purple-700">HRV</div>
+                      </div>
+                      <div className="text-center p-4 bg-green-50 rounded-lg">
+                        <Activity className="w-6 h-6 mx-auto mb-2 text-green-600" />
+                        <div className="text-2xl font-bold text-green-900">
+                          {patientAnalytics.averages.activity?.toLocaleString()}
+                        </div>
+                        <div className="text-xs text-green-700">Steps</div>
+                      </div>
+                      <div className="text-center p-4 bg-amber-50 rounded-lg">
+                        <TrendingUp className="w-6 h-6 mx-auto mb-2 text-amber-600" />
+                        <div className="text-2xl font-bold text-amber-900">
+                          {patientAnalytics.averages.mood}/10
+                        </div>
+                        <div className="text-xs text-amber-700">Mood</div>
+                      </div>
+                    </div>
+                  </CardContent>
+                </Card>
+              )}
             </div>
           ) : (
-            <div className="flex items-center justify-center h-64 text-muted-foreground">
-              {selectedPatient ? 'Loading AI insights...' : 'Select a patient to view AI insights'}
+            <div className="text-center py-12">
+              <p className="text-gray-500">Select a patient to view AI insights</p>
             </div>
           )}
         </TabsContent>

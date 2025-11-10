@@ -197,40 +197,61 @@ class AnalyticsService:
             if trends.get('sleep') and trends['sleep']['change'] < -0.5:
                 # Importance is proportional to how much this metric changed relative to others
                 importance = min((weighted_sleep / total_weighted_change), 0.85)  # Cap at 0.85
+                current_sleep = trends['sleep']['current']
                 drivers.append({
-                    'factor': 'Sleep irregularity',
+                    'factor': 'Sleep patterns',
+                    'displayName': 'Sleep patterns',
                     'importance': round(importance, 2),
                     'impact': round(importance, 2),
                     'trend': 'decreasing',
                     'direction': 'decreasing',
                     'change': trends['sleep']['change'],
-                    'percentChange': sleep_percent_change
+                    'percentChange': sleep_percent_change,
+                    'current': current_sleep,
+                    'baseline': 7.5,
+                    'unit': 'hours',
+                    'context': f"{current_sleep:.1f}h avg (target: 7-8h)"
                 })
             
             # HRV driver - dynamically weighted
             if trends.get('hrv') and trends['hrv']['change'] < -2:
                 importance = min((weighted_hrv / total_weighted_change), 0.85)
+                current_hrv = trends['hrv']['current']
+                # Get baseline from patient wearable or use default
+                hrv_baseline = 50  # default
                 drivers.append({
-                    'factor': 'HRV ↓',
+                    'factor': 'Heart rate variability',
+                    'displayName': 'Heart rate variability',
                     'importance': round(importance, 2),
                     'impact': round(importance, 2),
                     'trend': 'decreasing',
                     'direction': 'decreasing',
                     'change': trends['hrv']['change'],
-                    'percentChange': hrv_percent_change
+                    'percentChange': hrv_percent_change,
+                    'current': current_hrv,
+                    'baseline': hrv_baseline,
+                    'unit': 'ms',
+                    'context': f"{current_hrv:.0f}ms avg (baseline: {hrv_baseline:.0f}ms)"
                 })
             
             # Activity driver - dynamically weighted
             if trends.get('activity') and trends['activity']['change'] < -500:
                 importance = min((weighted_activity / total_weighted_change), 0.85)
+                current_activity = trends['activity']['current']
+                steps_goal = 10000  # default
                 drivers.append({
-                    'factor': 'Mobility ↓',
+                    'factor': 'Physical activity',
+                    'displayName': 'Physical activity',
                     'importance': round(importance, 2),
                     'impact': round(importance, 2),
                     'trend': 'decreasing',
                     'direction': 'decreasing',
                     'change': trends['activity']['change'],
-                    'percentChange': activity_percent_change
+                    'percentChange': activity_percent_change,
+                    'current': current_activity,
+                    'baseline': steps_goal,
+                    'unit': 'steps',
+                    'context': f"{current_activity:.0f} steps (goal: {steps_goal:,})"
                 })
         else:
             # Fallback to static weights if no trends available
