@@ -18,7 +18,13 @@ class Config:
     
     # Use instance folder for database (Flask convention)
     default_db_path = os.path.join(instance_path, 'phenomind.db')
-    SQLALCHEMY_DATABASE_URI = os.environ.get('DATABASE_URL') or f'sqlite:///{default_db_path}'
+    database_url = os.environ.get('DATABASE_URL') or f'sqlite:///{default_db_path}'
+    
+    # Fix for Render PostgreSQL URLs (postgres:// -> postgresql://)
+    if database_url.startswith('postgres://'):
+        database_url = database_url.replace('postgres://', 'postgresql://', 1)
+    
+    SQLALCHEMY_DATABASE_URI = database_url
     SQLALCHEMY_TRACK_MODIFICATIONS = False
     CORS_ORIGINS = os.environ.get('CORS_ORIGINS', 'http://localhost:3000').split(',')
 

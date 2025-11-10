@@ -4,10 +4,15 @@ from flask_migrate import Migrate
 from config import config
 from database import db
 from api import patients_bp, analytics_bp
+import os
 
 migrate = Migrate()
 
-def create_app(config_name='default'):
+def create_app(config_name=None):
+    # Auto-detect environment if not specified
+    if config_name is None:
+        config_name = 'production' if os.environ.get('FLASK_ENV') == 'production' else 'development'
+    
     app = Flask(__name__)
     app.config.from_object(config[config_name])
     
@@ -15,11 +20,14 @@ def create_app(config_name='default'):
     db.init_app(app)
     migrate.init_app(app, db)
     
-    # Allow all origins in development for easier debugging
+    # Configure CORS
+    cors_origins = app.config['CORS_ORIGINS']
     if app.config.get('DEBUG'):
-        CORS(app, resources={r"/api/*": {"origins": "*"}})
+        # Allow all origins in development
+        CORS(app, resources={r"/*": {"origins": "*"}})
     else:
-        CORS(app, origins=app.config['CORS_ORIGINS'])
+        # Use specific origins in production
+        CORS(app, resources={r"/*": {"origins": cors_origins}})
     
     # Register blueprints
     app.register_blueprint(patients_bp, url_prefix='/api')
@@ -27,8 +35,12 @@ def create_app(config_name='default'):
     
     # Add a simple health check route
     @app.route('/')
-    def health_check():
+    def home():
         return jsonify({'status': 'ok', 'message': 'PhenoMind API is running'})
+    
+    @app.route('/health')
+    def health_check():
+        return jsonify({'status': 'ok', 'message': 'PhenoMind API is healthy'})
     
     @app.route('/api')
     def api_info():
