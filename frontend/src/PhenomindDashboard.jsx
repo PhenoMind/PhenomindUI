@@ -8,7 +8,7 @@ import { Input } from "./components/ui/input.jsx";
 import { Label } from "./components/ui/label.jsx";
 import { Avatar, AvatarFallback, AvatarImage } from "./components/ui/avatar.jsx";
 import { AlertTriangle, Activity, Brain, ShieldCheck, ShieldAlert, Bell, Calendar as CalIcon, Search, TrendingUp, LineChart as LineIcon, Users, Lock, Stethoscope, MessageCircle, X, Send, Moon, Heart, CheckCircle, Lightbulb } from "lucide-react";
-import { LineChart, Line, XAxis, YAxis, Tooltip as RTooltip, CartesianGrid, ResponsiveContainer, AreaChart, Area, BarChart, Bar } from "recharts";
+import { LineChart, Line, XAxis, YAxis, Tooltip as RTooltip, CartesianGrid, ResponsiveContainer, AreaChart, Area } from "recharts";
 import { motion } from "framer-motion";
 import apiService from "./services/api.js";
 
