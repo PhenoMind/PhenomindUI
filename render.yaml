@@ -14,12 +14,16 @@ services:
     autoDeploy: true
 
     buildCommand: |
+      cd backend
       pip install --upgrade pip
       pip install -r requirements.txt
 
     # Use the one that matches your app entrypoint:
     # If you have an app factory "create_app()" inside backend/app.py:
-    startCommand: gunicorn -w 2 -k gthread -b 0.0.0.0:$PORT "app:create_app()"
+    startCommand: |
+    
+      cd backend
+      gunicorn -w 2 -k gthread -b 0.0.0.0:$PORT "app:create_app()
     # If instead you expose `app` from backend/run.py, comment the line above and use:
     # startCommand: gunicorn -w 2 -k gthread -b 0.0.0.0:$PORT run:app
 
