@@ -144,7 +144,7 @@ function ForecastCard({ patient }) {
   return (
     <Card className="rounded-lg shadow-sm border border-gray-200 bg-white overflow-hidden">
       <CardHeader className="pb-3 border-b border-gray-100">
-        <CardTitle className="text-sm font-medium text-gray-900 flex items-center gap-2">
+        <CardTitle className="text-base font-semibold text-gray-900 flex items-center gap-2">
           <AlertTriangle className="h-4 w-4 text-gray-400" />
           Risk Forecast (next 30 days)
         </CardTitle>
@@ -180,7 +180,7 @@ function TrendCard({ title, dataKey, unit, description, data }) {
   return (
     <Card className="rounded-lg shadow-sm border border-gray-200 bg-white overflow-hidden hover:shadow-md transition-all">
       <CardHeader className="pb-3 border-b border-gray-100">
-        <CardTitle className="text-sm font-medium text-gray-900 flex items-center gap-2">
+        <CardTitle className="text-base font-semibold text-gray-900 flex items-center gap-2">
           <LineIcon className="h-4 w-4 text-gray-400" />
           {title}
         </CardTitle>
@@ -252,7 +252,7 @@ function AISummary({ patient, analytics }) {
   return (
     <Card className="rounded-lg shadow-sm border border-gray-200 bg-white overflow-hidden">
       <CardHeader className="pb-3 border-b border-gray-100">
-        <CardTitle className="text-sm font-medium text-gray-900 flex items-center gap-2">
+        <CardTitle className="text-base font-semibold text-gray-900 flex items-center gap-2">
           <Brain className="h-4 w-4 text-gray-400" />
           AI Summary
         </CardTitle>
@@ -496,7 +496,10 @@ function TimelineCard({ patient }) {
   return (
     <Card className="rounded-2xl shadow-sm">
       <CardHeader className="pb-2">
-        <CardTitle className="text-xl font-semibold text-foreground flex items-center gap-2"><TrendingUp className="h-6 w-6" />Patient Timeline</CardTitle>
+        <CardTitle className="text-base font-semibold text-foreground flex items-center gap-2">
+          <TrendingUp className="h-4 w-4" />
+          Patient Timeline
+        </CardTitle>
       </CardHeader>
       <CardContent>
         <div className="relative pl-4">
@@ -526,7 +529,10 @@ function EHRCard({ patient }) {
   return (
     <Card className="rounded-2xl shadow-sm">
       <CardHeader className="pb-2">
-        <CardTitle className="text-xl font-semibold text-foreground flex items-center gap-2"><Stethoscope className="h-6 w-6" />EHR Summary</CardTitle>
+        <CardTitle className="text-base font-semibold text-foreground flex items-center gap-2">
+          <Stethoscope className="h-4 w-4" />
+          EHR Summary
+        </CardTitle>
       </CardHeader>
       <CardContent className="space-y-4">
         <div>
@@ -579,7 +585,10 @@ function WearablesCard({ patient }) {
   return (
     <Card className="rounded-2xl shadow-sm">
       <CardHeader className="pb-2">
-        <CardTitle className="text-xl font-semibold text-foreground flex items-center gap-2"><Activity className="h-6 w-6" />Wearables Data</CardTitle>
+        <CardTitle className="text-base font-semibold text-foreground flex items-center gap-2">
+          <Activity className="h-4 w-4" />
+          Wearables Data
+        </CardTitle>
       </CardHeader>
       <CardContent className="space-y-4">
         <div>
@@ -671,8 +680,8 @@ function PopulationView() {
       {/* Network Overview - Visual Impact */}
       <Card className="rounded-2xl shadow-sm lg:col-span-2">
         <CardHeader className="pb-4">
-          <CardTitle className="text-xl font-semibold text-foreground flex items-center gap-2">
-            <Users className="h-6 w-6" />
+          <CardTitle className="text-base font-semibold text-foreground flex items-center gap-2">
+            <Users className="h-4 w-4" />
             Network Overview
           </CardTitle>
         </CardHeader>
@@ -680,20 +689,20 @@ function PopulationView() {
           {/* Big Numbers First */}
           <div className="grid grid-cols-4 gap-4 mb-6">
             <div className="text-center">
-              <div className="text-6xl font-bold text-blue-600">4</div>
-              <div className="text-xl text-muted-foreground font-semibold">Premier Hospitals</div>
+              <div className="text-3xl font-bold text-blue-600">4</div>
+              <div className="text-sm text-muted-foreground font-semibold">Premier Hospitals</div>
             </div>
             <div className="text-center">
-              <div className="text-6xl font-bold text-emerald-600">1,490</div>
-              <div className="text-xl text-muted-foreground font-semibold">Total Patients</div>
+              <div className="text-3xl font-bold text-emerald-600">1,490</div>
+              <div className="text-sm text-muted-foreground font-semibold">Total Patients</div>
             </div>
             <div className="text-center">
-              <div className="text-6xl font-bold text-red-600">181</div>
-              <div className="text-xl text-muted-foreground font-semibold">High Risk</div>
+              <div className="text-3xl font-bold text-red-600">181</div>
+              <div className="text-sm text-muted-foreground font-semibold">High Risk</div>
             </div>
             <div className="text-center">
-              <div className="text-6xl font-bold text-amber-600">4</div>
-              <div className="text-xl text-muted-foreground font-semibold">Conditions</div>
+              <div className="text-3xl font-bold text-amber-600">4</div>
+              <div className="text-sm text-muted-foreground font-semibold">Conditions</div>
             </div>
           </div>
 
@@ -761,33 +770,33 @@ function PopulationView() {
 
           {/* Condition Breakdown with High Risk */}
           <div className="grid grid-cols-2 gap-4">
-            <div className="flex justify-between items-center p-5 bg-gray-50 rounded-lg">
+            <div className="flex justify-between items-center p-4 bg-gray-50 rounded-lg">
               <div>
-                <div className="text-xl font-semibold">Depression</div>
-                <div className="text-lg text-red-600 font-semibold">89 high risk</div>
+                <div className="text-base font-semibold">Depression</div>
+                <div className="text-sm text-red-600 font-semibold">89 high risk</div>
               </div>
-              <span className="text-3xl font-bold text-indigo-600">645</span>
+              <span className="text-2xl font-bold text-indigo-600">645</span>
             </div>
-            <div className="flex justify-between items-center p-5 bg-gray-50 rounded-lg">
+            <div className="flex justify-between items-center p-4 bg-gray-50 rounded-lg">
               <div>
-                <div className="text-xl font-semibold">Anxiety</div>
-                <div className="text-lg text-red-600 font-semibold">52 high risk</div>
+                <div className="text-base font-semibold">Anxiety</div>
+                <div className="text-sm text-red-600 font-semibold">52 high risk</div>
               </div>
-              <span className="text-3xl font-bold text-indigo-600">423</span>
+              <span className="text-2xl font-bold text-indigo-600">423</span>
             </div>
-            <div className="flex justify-between items-center p-5 bg-gray-50 rounded-lg">
+            <div className="flex justify-between items-center p-4 bg-gray-50 rounded-lg">
               <div>
-                <div className="text-xl font-semibold">Bipolar</div>
-                <div className="text-lg text-red-600 font-semibold">47 high risk</div>
+                <div className="text-base font-semibold">Bipolar</div>
+                <div className="text-sm text-red-600 font-semibold">47 high risk</div>
               </div>
-              <span className="text-3xl font-bold text-indigo-600">298</span>
+              <span className="text-2xl font-bold text-indigo-600">298</span>
             </div>
-            <div className="flex justify-between items-center p-5 bg-gray-50 rounded-lg">
+            <div className="flex justify-between items-center p-4 bg-gray-50 rounded-lg">
               <div>
-                <div className="text-xl font-semibold">PTSD</div>
-                <div className="text-lg text-red-600 font-semibold">18 high risk</div>
+                <div className="text-base font-semibold">PTSD</div>
+                <div className="text-sm text-red-600 font-semibold">18 high risk</div>
               </div>
-              <span className="text-3xl font-bold text-indigo-600">124</span>
+              <span className="text-2xl font-bold text-indigo-600">124</span>
             </div>
           </div>
         </CardContent>
@@ -796,19 +805,19 @@ function PopulationView() {
       {/* Federated Learning (right column) */}
       <Card className="rounded-2xl shadow-sm">
         <CardHeader className="pb-4">
-          <CardTitle className="text-xl font-semibold text-foreground flex items-center gap-2">
-            <Lock className="h-6 w-6" />
+          <CardTitle className="text-base font-semibold text-foreground flex items-center gap-2">
+            <Lock className="h-4 w-4" />
             Federated Learning
           </CardTitle>
         </CardHeader>
         <CardContent className="space-y-5">
           {/* High Risk Alert */}
-          <div className="bg-red-50 border border-red-200 rounded-lg p-5 mb-5">
-            <div className="flex items-center gap-3 mb-3">
-              <AlertTriangle className="h-7 w-7 text-red-600" />
-              <span className="font-semibold text-red-700 text-xl">High Risk Alert</span>
+          <div className="bg-red-50 border border-red-200 rounded-lg p-4 mb-4">
+            <div className="flex items-center gap-3 mb-2">
+              <AlertTriangle className="h-5 w-5 text-red-600" />
+              <span className="font-semibold text-red-700 text-base">High Risk Alert</span>
             </div>
-            <div className="text-lg text-red-700">
+            <div className="text-sm text-red-700">
               <strong>181 patients</strong> across network flagged as high risk for relapse in next 14 days
             </div>
           </div>
@@ -816,41 +825,41 @@ function PopulationView() {
           {/* KPIs */}
           <div className="grid grid-cols-2 gap-4">
             <div className="text-center">
-              <div className="text-4xl font-semibold text-emerald-600">89.7%</div>
-              <div className="text-lg text-muted-foreground">Model Accuracy</div>
+              <div className="text-3xl font-semibold text-emerald-600">89.7%</div>
+              <div className="text-sm text-muted-foreground">Model Accuracy</div>
             </div>
             <div className="text-center">
-              <div className="text-4xl font-semibold text-indigo-600">4</div>
-              <div className="text-lg text-muted-foreground">Active Sites</div>
+              <div className="text-3xl font-semibold text-indigo-600">4</div>
+              <div className="text-sm text-muted-foreground">Active Sites</div>
             </div>
           </div>
 
           {/* Compliance / Privacy */}
           <div className="space-y-4 pt-2">
             <div className="flex items-center justify-between">
-              <span className="text-xl text-foreground">Privacy level</span>
-              <Badge variant="outline" className="text-lg py-2 px-3">ε = 2.0</Badge>
+              <span className="text-base text-foreground">Privacy level</span>
+              <Badge variant="outline" className="text-sm py-1 px-2">ε = 2.0</Badge>
             </div>
             <div className="flex items-center justify-between">
-              <span className="text-xl text-foreground">HIPAA compliance</span>
-              <Badge className="bg-emerald-100 text-emerald-700 text-lg py-2 px-3">Verified</Badge>
+              <span className="text-base text-foreground">HIPAA compliance</span>
+              <Badge className="bg-emerald-100 text-emerald-700 text-sm py-1 px-2">Verified</Badge>
             </div>
           </div>
 
           {/* Data sharing control (static for now) */}
           <div className="pt-4">
-            <div className="flex items-center justify-between text-lg text-muted-foreground mb-3">
+            <div className="flex items-center justify-between text-sm text-muted-foreground mb-3">
               <span>Data sharing</span>
               <span>Conservative</span>
             </div>
-            <div className="w-full bg-gray-200 rounded-full h-4">
-              <div className="h-4 rounded-full bg-blue-500" style={{ width: '35%' }} />
+            <div className="w-full bg-gray-200 rounded-full h-3">
+              <div className="h-3 rounded-full bg-blue-500" style={{ width: '35%' }} />
             </div>
-            <p className="text-base text-muted-foreground mt-2">Higher sharing = Better accuracy</p>
+            <p className="text-xs text-muted-foreground mt-2">Higher sharing = Better accuracy</p>
           </div>
 
           <div className="pt-4 border-t border-gray-100">
-            <p className="text-lg text-muted-foreground">
+            <p className="text-sm text-muted-foreground">
               Encrypted model updates shared across sites. Raw patient data never leaves hospitals.
             </p>
           </div>
@@ -859,85 +868,6 @@ function PopulationView() {
     </div>
   );
 }
-
-
-
-// function PopulationView() {
-
-//   const disorderBreakdown = [
-//     { disorder: "Depression", totalPatients: 645, highRisk: 89, networkSites: 4 },
-//     { disorder: "Bipolar", totalPatients: 298, highRisk: 47, networkSites: 4 },
-//     { disorder: "Anxiety", totalPatients: 423, highRisk: 52, networkSites: 4 },
-//     { disorder: "PTSD", totalPatients: 124, highRisk: 18, networkSites: 3 },
-//   ];
-
-//   return (
-//     <div className="grid grid-cols-1 gap-6 lg:grid-cols-3">
-//       <Card className="rounded-2xl shadow-sm lg:col-span-2">
-//         <CardHeader className="pb-4">
-//           <CardTitle className="text-xl font-semibold text-foreground flex items-center gap-2"><Users className="h-6 w-6"/>Network Overview</CardTitle>
-//         </CardHeader>
-//         <CardContent>
-//           <div className="grid grid-cols-4 gap-4 mb-6">
-//             <div className="text-center">
-//               <div className="text-6xl font-bold text-blue-600">4</div>
-//               <div className="text-xl text-muted-foreground font-semibold">Premier Hospitals</div>
-//             </div>
-//             <div className="text-center">
-//               <div className="text-6xl font-bold text-emerald-600">1,490</div>
-//               <div className="text-xl text-muted-foreground font-semibold">Total Patients</div>
-//             </div>
-//             <div className="text-center">
-//               <div className="text-6xl font-bold text-red-600">181</div>
-//               <div className="text-xl text-muted-foreground font-semibold">High Risk</div>
-//             </div>
-//             <div className="text-center">
-//               <div className="text-6xl font-bold text-amber-600">4</div>
-//               <div className="text-xl text-muted-foreground font-semibold">Conditions</div>
-//             </div>
-//           </div>
-//           <div className="grid grid-cols-2 gap-4">
-//             {disorderBreakdown.map((d, i) => (
-//               <div key={i} className="flex justify-between items-center p-5 bg-gray-50 rounded-lg">
-//                 <div>
-//                   <div className="text-xl font-semibold">{d.disorder}</div>
-//                   <div className="text-lg text-red-600 font-semibold">{d.highRisk} high risk</div>
-//                 </div>
-//                 <span className="text-3xl font-bold text-indigo-600">{d.totalPatients}</span>
-//               </div>
-//             ))}
-//           </div>
-//         </CardContent>
-//       </Card>
-//       <Card className="rounded-2xl shadow-sm">
-//         <CardHeader className="pb-4">
-//           <CardTitle className="text-xl font-semibold text-foreground flex items-center gap-2"><Lock className="h-6 w-6"/>Federated Learning</CardTitle>
-//         </CardHeader>
-//         <CardContent className="space-y-5">
-//           <div className="bg-red-50 border border-red-200 rounded-lg p-5 mb-5">
-//             <div className="flex items-center gap-3 mb-3">
-//               <AlertTriangle className="h-7 w-7 text-red-600" />
-//               <span className="font-semibold text-red-700 text-xl">High Risk Alert</span>
-//             </div>
-//             <div className="text-lg text-red-700">
-//               <strong>181 patients</strong> across network flagged as high risk for relapse in next 14 days
-//             </div>
-//           </div>
-//           <div className="grid grid-cols-2 gap-4">
-//             <div className="text-center">
-//               <div className="text-4xl font-semibold text-emerald-600">89.7%</div>
-//               <div className="text-lg text-muted-foreground">Model Accuracy</div>
-//             </div>
-//             <div className="text-center">
-//               <div className="text-4xl font-semibold text-indigo-600">4</div>
-//               <div className="text-lg text-muted-foreground">Active Sites</div>
-//             </div>
-//           </div>
-//         </CardContent>
-//       </Card>
-//     </div>
-//   );
-// }
 
 export default function Component() {
   const [tab, setTab] = useState("patient");
@@ -1096,22 +1026,22 @@ export default function Component() {
 
       <Tabs value={tab} onValueChange={setTab} className="w-full">
         <div className="border-b border-gray-200 mb-8">
-          <TabsList className="inline-flex h-12 items-center justify-start gap-0 bg-transparent p-0 w-full md:w-auto">
+          <TabsList className="inline-flex h-14 items-center justify-start gap-0 bg-transparent p-0 w-full md:w-auto">
             <TabsTrigger 
               value="patient" 
-              className="relative px-6 py-2.5 text-sm font-medium text-gray-500 rounded-none border-b-2 border-transparent data-[state=active]:text-gray-900 data-[state=active]:border-gray-900 data-[state=active]:bg-transparent transition-all duration-200 hover:text-gray-700"
+              className="relative px-8 py-3 text-lg font-semibold text-gray-500 rounded-none border-b-2 border-transparent data-[state=active]:text-gray-900 data-[state=active]:border-gray-900 data-[state=active]:bg-transparent transition-all duration-200 hover:text-gray-700"
             >
               Patient
             </TabsTrigger>
             <TabsTrigger 
               value="insights" 
-              className="relative px-6 py-2.5 text-sm font-medium text-gray-500 rounded-none border-b-2 border-transparent data-[state=active]:text-gray-900 data-[state=active]:border-gray-900 data-[state=active]:bg-transparent transition-all duration-200 hover:text-gray-700"
+              className="relative px-8 py-3 text-lg font-semibold text-gray-500 rounded-none border-b-2 border-transparent data-[state=active]:text-gray-900 data-[state=active]:border-gray-900 data-[state=active]:bg-transparent transition-all duration-200 hover:text-gray-700"
             >
               AI Insights
             </TabsTrigger>
             <TabsTrigger 
               value="population" 
-              className="relative px-6 py-2.5 text-sm font-medium text-gray-500 rounded-none border-b-2 border-transparent data-[state=active]:text-gray-900 data-[state=active]:border-gray-900 data-[state=active]:bg-transparent transition-all duration-200 hover:text-gray-700"
+              className="relative px-8 py-3 text-lg font-semibold text-gray-500 rounded-none border-b-2 border-transparent data-[state=active]:text-gray-900 data-[state=active]:border-gray-900 data-[state=active]:bg-transparent transition-all duration-200 hover:text-gray-700"
             >
               Population
             </TabsTrigger>
@@ -1226,7 +1156,7 @@ export default function Component() {
                     {patientAnalytics.biomarkerDrivers && patientAnalytics.biomarkerDrivers.length > 0 ? (
                       <div className="space-y-4">
                         {patientAnalytics.biomarkerDrivers.map((driver, index) => {
-                          const riskPoints = (driver.importance * (patientAnalytics.riskScore || 0)).toFixed(0);
+                          const contributionPct = (driver.importance * 100).toFixed(0);
                           const barWidth = `${driver.importance * 100}%`;
                           const barColor = driver.importance > 0.4 ? 'bg-red-500' : 
                                          driver.importance > 0.25 ? 'bg-orange-500' : 'bg-yellow-500';
@@ -1249,7 +1179,7 @@ export default function Component() {
                                   </span>
                                 </div>
                                 <span className="text-sm font-semibold text-red-600">
-                                  {riskPoints} risk points
+                                  {contributionPct}% contribution
                                 </span>
                               </div>
                               
