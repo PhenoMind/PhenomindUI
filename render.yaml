@@ -1,35 +1,29 @@
 # render.yaml
-# Place this at the repo root and connect the repo in Render → "New +" → "Blueprint".
-# It will create:
-# - A Flask web service using the /backend directory
-# - A free Postgres database, with DATABASE_URL injected into the service
+# Repo root. Deploy via Render → New → Blueprint (select the patient_profiles branch).
 
 services:
   - type: web
     name: phenomind-backend
     env: python
     plan: free
-    rootDir: backend
-    region: oregon            # or "frankfurt", etc.
+    rootDir: backend              # Runs build/start inside ./backend
+    region: oregon
     autoDeploy: true
 
     buildCommand: |
-      cd backend
       pip install --upgrade pip
       pip install -r requirements.txt
 
-    # Use the one that matches your app entrypoint:
-    # If you have an app factory "create_app()" inside backend/app.py:
-    startCommand: |
-    
-      cd backend
-      gunicorn -w 2 -k gthread -b 0.0.0.0:$PORT "app:create_app()
-    # If instead you expose `app` from backend/run.py, comment the line above and use:
+    # Pick ONE startCommand below and keep it on a single line:
+
+    # If app factory exists in backend/app.py: create_app()
+    startCommand: gunicorn -w 2 -k gthread -b 0.0.0.0:$PORT "app:create_app()"
+
+    # OR, if you expose `app` in backend/run.py, comment the line above and use:
     # startCommand: gunicorn -w 2 -k gthread -b 0.0.0.0:$PORT run:app
 
-    healthCheckPath: /health   # Change or remove if you don't have a health route
-    # If your health endpoint is under /api/health, set that instead:
-    # healthCheckPath: /api/health
+    # If you don't have a /health route, remove this or point to an existing path (e.g., /api/health)
+    healthCheckPath: /health
 
     envVars:
       - key: PYTHONUNBUFFERED
@@ -38,12 +32,8 @@ services:
         value: production
       - key: SECRET_KEY
         generateValue: true
-
-      # Allow your Vercel frontend origin (add Preview domains as needed)
       - key: CORS_ORIGINS
-        value: https://phenomind-ui.vercel.app
-
-      # Wire in the managed Postgres connection string
+        value: https://phenomind-ui.vercel.app   # ensure this matches your exact Vercel domain
       - key: DATABASE_URL
         fromDatabase:
           name: phenomind-db
