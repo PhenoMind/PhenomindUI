@@ -26,7 +26,10 @@ class Config:
     
     SQLALCHEMY_DATABASE_URI = database_url
     SQLALCHEMY_TRACK_MODIFICATIONS = False
-    CORS_ORIGINS = os.environ.get('CORS_ORIGINS', 'http://localhost:3000').split(',')
+    
+    # Parse CORS origins - supports comma-separated list
+    cors_origins_str = os.environ.get('CORS_ORIGINS', 'http://localhost:3000')
+    CORS_ORIGINS = [origin.strip() for origin in cors_origins_str.split(',')]
 
 class DevelopmentConfig(Config):
     DEBUG = True

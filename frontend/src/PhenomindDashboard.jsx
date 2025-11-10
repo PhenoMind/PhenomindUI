@@ -766,8 +766,9 @@ export default function Component() {
       }
     } catch (err) {
       console.error('Failed to load patients:', err);
+      const backendUrl = process.env.REACT_APP_API_URL || 'http://localhost:5000';
       const errorMessage = err.message.includes('Failed to fetch') || err.message.includes('NetworkError')
-        ? 'Cannot connect to backend server. Make sure Flask is running on http://localhost:5000'
+        ? `Cannot connect to backend server at ${backendUrl}`
         : `Failed to load patients: ${err.message}`;
       setError(errorMessage);
       // Fallback to empty array
@@ -842,6 +843,7 @@ export default function Component() {
 
   // Show error state
   if (error && patients.length === 0) {
+    const backendUrl = process.env.REACT_APP_API_URL || 'http://localhost:5000';
     return (
       <div className="flex h-screen items-center justify-center">
         <div className="text-center max-w-md">
@@ -849,7 +851,7 @@ export default function Component() {
           <div className="text-muted-foreground mb-4">{error}</div>
           <Button onClick={loadPatients}>Retry</Button>
           <div className="mt-4 text-sm text-muted-foreground">
-            Make sure the Flask backend is running on http://localhost:5000
+            Backend URL: {backendUrl}
           </div>
         </div>
       </div>
