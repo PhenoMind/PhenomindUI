@@ -179,29 +179,118 @@ class AnalyticsService:
         return recommendations
     
     def _identify_biomarker_drivers(self, patient, trends):
-        """Identify primary drivers of risk based on biomarker changes"""
+        """Identify primary drivers of risk based on biomarker changes with dynamic weighting"""
         drivers = []
         
-        if trends.get('sleep') and trends['sleep']['change'] < -0.5:
-            drivers.append({
-                'factor': 'Sleep irregularity',
-                'importance': 0.38,
-                'trend': 'decreasing'
-            })
+        # Calculate the magnitude of change for each biomarker
+        sleep_change = abs(trends.get('sleep', {}).get('change', 0)) if trends.get('sleep') else 0
+        hrv_change = abs(trends.get('hrv', {}).get('change', 0)) if trends.get('hrv') else 0
+        activity_change = abs(trends.get('activity', {}).get('change', 0)) if trends.get('activity') else 0
         
-        if trends.get('hrv') and trends['hrv']['change'] < -2:
-            drivers.append({
-                'factor': 'HRV ↓',
-                'importance': 0.29,
-                'trend': 'decreasing'
-            })
+        # Normalize changes to percentage of baseline to make them comparable
+        sleep_percent_change = abs(trends.get('sleep', {}).get('percentChange', 0)) if trends.get('sleep') else 0
+        hrv_percent_change = abs(trends.get('hrv', {}).get('percentChange', 0)) if trends.get('hrv') else 0
+        activity_percent_change = abs(trends.get('activity', {}).get('percentChange', 0)) if trends.get('activity') else 0
         
-        if trends.get('activity') and trends['activity']['change'] < -500:
-            drivers.append({
-                'factor': 'Mobility ↓',
-                'importance': 0.21,
-                'trend': 'decreasing'
-            })
+        # Add severity multipliers for clinically significant changes
+        sleep_severity = 1.0
+        if sleep_change > 2.0:  # Lost more than 2 hours of sleep
+            sleep_severity = 1.5
+        elif sleep_change > 1.0:  # Lost more than 1 hour
+            sleep_severity = 1.2
+        
+        hrv_severity = 1.0
+        if hrv_change > 10:  # HRV dropped by more than 10ms
+            hrv_severity = 1.4
+        elif hrv_change > 5:  # HRV dropped by more than 5ms
+            hrv_severity = 1.2
+        
+        activity_severity = 1.0
+        if activity_change > 3000:  # Lost more than 3000 steps
+            activity_severity = 1.3
+        elif activity_change > 1500:  # Lost more than 1500 steps
+            activity_severity = 1.15
+        
+        # Apply severity multipliers to percent changes
+        weighted_sleep = sleep_percent_change * sleep_severity
+        weighted_hrv = hrv_percent_change * hrv_severity
+        weighted_activity = activity_percent_change * activity_severity
+        
+        # Calculate total weighted change to determine relative importance
+        total_weighted_change = weighted_sleep + weighted_hrv + weighted_activity
+        
+        # Only calculate drivers if there are meaningful changes
+        if total_weighted_change > 0:
+            # Sleep driver - dynamically weighted based on relative change
+            if trends.get('sleep') and trends['sleep']['change'] < -0.5:
+                # Importance is proportional to how much this metric changed relative to others
+                importance = min((weighted_sleep / total_weighted_change), 0.85)  # Cap at 0.85
+                drivers.append({
+                    'factor': 'Sleep irregularity',
+                    'importance': round(importance, 2),
+                    'impact': round(importance, 2),
+                    'trend': 'decreasing',
+                    'direction': 'decreasing',
+                    'change': trends['sleep']['change'],
+                    'percentChange': sleep_percent_change
+                })
+            
+            # HRV driver - dynamically weighted
+            if trends.get('hrv') and trends['hrv']['change'] < -2:
+                importance = min((weighted_hrv / total_weighted_change), 0.85)
+                drivers.append({
+                    'factor': 'HRV ↓',
+                    'importance': round(importance, 2),
+                    'impact': round(importance, 2),
+                    'trend': 'decreasing',
+                    'direction': 'decreasing',
+                    'change': trends['hrv']['change'],
+                    'percentChange': hrv_percent_change
+                })
+            
+            # Activity driver - dynamically weighted
+            if trends.get('activity') and trends['activity']['change'] < -500:
+                importance = min((weighted_activity / total_weighted_change), 0.85)
+                drivers.append({
+                    'factor': 'Mobility ↓',
+                    'importance': round(importance, 2),
+                    'impact': round(importance, 2),
+                    'trend': 'decreasing',
+                    'direction': 'decreasing',
+                    'change': trends['activity']['change'],
+                    'percentChange': activity_percent_change
+                })
+        else:
+            # Fallback to static weights if no trends available
+            if trends.get('sleep') and trends['sleep']['change'] < -0.5:
+                drivers.append({
+                    'factor': 'Sleep irregularity',
+                    'importance': 0.38,
+                    'impact': 0.38,
+                    'trend': 'decreasing',
+                    'direction': 'decreasing'
+                })
+            
+            if trends.get('hrv') and trends['hrv']['change'] < -2:
+                drivers.append({
+                    'factor': 'HRV ↓',
+                    'importance': 0.29,
+                    'impact': 0.29,
+                    'trend': 'decreasing',
+                    'direction': 'decreasing'
+                })
+            
+            if trends.get('activity') and trends['activity']['change'] < -500:
+                drivers.append({
+                    'factor': 'Mobility ↓',
+                    'importance': 0.21,
+                    'impact': 0.21,
+                    'trend': 'decreasing',
+                    'direction': 'decreasing'
+                })
+        
+        # Sort by importance (highest first)
+        drivers.sort(key=lambda x: x['importance'], reverse=True)
         
         return drivers
 
