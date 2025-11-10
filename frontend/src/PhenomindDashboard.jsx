@@ -665,21 +665,15 @@ function Stat({ title, value, delta, icon: Icon }) {
 
 // Population View Component
 function PopulationView() {
-
-  const disorderBreakdown = [
-    { disorder: "Depression", totalPatients: 645, highRisk: 89, networkSites: 4 },
-    { disorder: "Bipolar", totalPatients: 298, highRisk: 47, networkSites: 4 },
-    { disorder: "Anxiety", totalPatients: 423, highRisk: 52, networkSites: 4 },
-    { disorder: "PTSD", totalPatients: 124, highRisk: 18, networkSites: 3 },
-  ];
-
   return (
     <div className="grid grid-cols-1 gap-6 lg:grid-cols-3">
+      {/* Network Overview - Visual Impact */}
       <Card className="rounded-2xl shadow-sm lg:col-span-2">
         <CardHeader className="pb-4">
           <CardTitle className="text-xl font-semibold text-foreground flex items-center gap-2"><Users className="h-6 w-6"/>Network Overview</CardTitle>
         </CardHeader>
         <CardContent>
+          {/* Big Numbers First */}
           <div className="grid grid-cols-4 gap-4 mb-6">
             <div className="text-center">
               <div className="text-6xl font-bold text-blue-600">4</div>
@@ -698,41 +692,102 @@ function PopulationView() {
               <div className="text-xl text-muted-foreground font-semibold">Conditions</div>
             </div>
           </div>
+
+          {/* Visual Network Diagram */}
+          <div className="relative bg-gradient-to-br from-blue-50 to-indigo-50 rounded-xl p-6 mb-4">
+            <svg width="100%" height="380" viewBox="0 0 700 380" className="overflow-visible">
+              {/* Connection Lines - Animated */}
+              <defs>
+                <linearGradient id="lineGradient" x1="0%" y1="0%" x2="100%" y2="100%">
+                  <stop offset="0%" stopColor="#3b82f6" stopOpacity="0.8"/>
+                  <stop offset="100%" stopColor="#6366f1" stopOpacity="0.5"/>
+                </linearGradient>
+              </defs>
+              
+              <g stroke="url(#lineGradient)" strokeWidth="4" strokeDasharray="10,8">
+                <line x1="350" y1="190" x2="140" y2="100">
+                  <animate attributeName="stroke-dashoffset" values="0;-36" dur="3s" repeatCount="indefinite"/>
+                </line>
+                <line x1="350" y1="190" x2="560" y2="100">
+                  <animate attributeName="stroke-dashoffset" values="0;-36" dur="3s" begin="0.5s" repeatCount="indefinite"/>
+                </line>
+                <line x1="350" y1="190" x2="140" y2="280">
+                  <animate attributeName="stroke-dashoffset" values="0;-36" dur="3s" begin="1s" repeatCount="indefinite"/>
+                </line>
+                <line x1="350" y1="190" x2="560" y2="280">
+                  <animate attributeName="stroke-dashoffset" values="0;-36" dur="3s" begin="1.5s" repeatCount="indefinite"/>
+                </line>
+              </g>
+              
+              {/* Central PhenoMind Hub */}
+              <g>
+                <rect x="270" y="150" width="160" height="80" rx="16" fill="#3b82f6" opacity="0.95" stroke="#1e40af" strokeWidth="3"/>
+                <text x="350" y="180" textAnchor="middle" fill="white" fontSize="20" fontWeight="700">
+                  PhenoMind
+                </text>
+                <text x="350" y="205" textAnchor="middle" fill="white" fontSize="16" fontWeight="600">
+                  Federated AI
+                </text>
+              </g>
+              
+              {/* Hospital Network Nodes */}
+              <g>
+                {/* Mass General Hospital */}
+                <rect x="60" y="60" width="160" height="80" rx="12" fill="#10b981" opacity="0.95" stroke="#059669" strokeWidth="3"/>
+                <text x="140" y="95" textAnchor="middle" fill="white" fontSize="16" fontWeight="700">Mass General</text>
+                <text x="140" y="115" textAnchor="middle" fill="white" fontSize="16" fontWeight="700">Hospital</text>
+                <text x="140" y="165" textAnchor="middle" fill="#1f2937" fontSize="18" fontWeight="700">324 patients</text>
+                
+                {/* Johns Hopkins */}
+                <rect x="480" y="60" width="160" height="80" rx="12" fill="#8b5cf6" opacity="0.95" stroke="#7c3aed" strokeWidth="3"/>
+                <text x="560" y="95" textAnchor="middle" fill="white" fontSize="16" fontWeight="700">Johns Hopkins</text>
+                <text x="560" y="115" textAnchor="middle" fill="white" fontSize="16" fontWeight="700">University</text>
+                <text x="560" y="165" textAnchor="middle" fill="#1f2937" fontSize="18" fontWeight="700">298 patients</text>
+                
+                {/* Mayo Clinic */}
+                <rect x="60" y="240" width="160" height="80" rx="12" fill="#f59e0b" opacity="0.95" stroke="#d97706" strokeWidth="3"/>
+                <text x="140" y="275" textAnchor="middle" fill="white" fontSize="16" fontWeight="700">Mayo Clinic</text>
+                <text x="140" y="295" textAnchor="middle" fill="white" fontSize="16" fontWeight="700">Rochester</text>
+                <text x="140" y="345" textAnchor="middle" fill="#1f2937" fontSize="18" fontWeight="700">412 patients</text>
+                
+                {/* Cleveland Clinic */}
+                <rect x="480" y="240" width="160" height="80" rx="12" fill="#ef4444" opacity="0.95" stroke="#dc2626" strokeWidth="3"/>
+                <text x="560" y="275" textAnchor="middle" fill="white" fontSize="16" fontWeight="700">Cleveland</text>
+                <text x="560" y="295" textAnchor="middle" fill="white" fontSize="16" fontWeight="700">Clinic</text>
+                <text x="560" y="345" textAnchor="middle" fill="#1f2937" fontSize="18" fontWeight="700">256 patients</text>
+              </g>
+            </svg>
+          </div>
+
+          {/* Condition Breakdown with High Risk */}
           <div className="grid grid-cols-2 gap-4">
-            {disorderBreakdown.map((d, i) => (
-              <div key={i} className="flex justify-between items-center p-5 bg-gray-50 rounded-lg">
-                <div>
-                  <div className="text-xl font-semibold">{d.disorder}</div>
-                  <div className="text-lg text-red-600 font-semibold">{d.highRisk} high risk</div>
-                </div>
-                <span className="text-3xl font-bold text-indigo-600">{d.totalPatients}</span>
+            <div className="flex justify-between items-center p-5 bg-gray-50 rounded-lg">
+              <div>
+                <div className="text-xl font-semibold">Depression</div>
+                <div className="text-lg text-red-600 font-semibold">89 high risk</div>
               </div>
-            ))}
-          </div>
-        </CardContent>
-      </Card>
-      <Card className="rounded-2xl shadow-sm">
-        <CardHeader className="pb-4">
-          <CardTitle className="text-xl font-semibold text-foreground flex items-center gap-2"><Lock className="h-6 w-6"/>Federated Learning</CardTitle>
-        </CardHeader>
-        <CardContent className="space-y-5">
-          <div className="bg-red-50 border border-red-200 rounded-lg p-5 mb-5">
-            <div className="flex items-center gap-3 mb-3">
-              <AlertTriangle className="h-7 w-7 text-red-600" />
-              <span className="font-semibold text-red-700 text-xl">High Risk Alert</span>
+              <span className="text-3xl font-bold text-indigo-600">645</span>
             </div>
-            <div className="text-lg text-red-700">
-              <strong>181 patients</strong> across network flagged as high risk for relapse in next 14 days
+            <div className="flex justify-between items-center p-5 bg-gray-50 rounded-lg">
+              <div>
+                <div className="text-xl font-semibold">Anxiety</div>
+                <div className="text-lg text-red-600 font-semibold">52 high risk</div>
+              </div>
+              <span className="text-3xl font-bold text-indigo-600">423</span>
             </div>
-          </div>
-          <div className="grid grid-cols-2 gap-4">
-            <div className="text-center">
-              <div className="text-4xl font-semibold text-emerald-600">89.7%</div>
-              <div className="text-lg text-muted-foreground">Model Accuracy</div>
+            <div className="flex justify-between items-center p-5 bg-gray-50 rounded-lg">
+              <div>
+                <div className="text-xl font-semibold">Bipolar</div>
+                <div className="text-lg text-red-600 font-semibold">47 high risk</div>
+              </div>
+              <span className="text-3xl font-bold text-indigo-600">298</span>
             </div>
-            <div className="text-center">
-              <div className="text-4xl font-semibold text-indigo-600">4</div>
-              <div className="text-lg text-muted-foreground">Active Sites</div>
+            <div className="flex justify-between items-center p-5 bg-gray-50 rounded-lg">
+              <div>
+                <div className="text-xl font-semibold">PTSD</div>
+                <div className="text-lg text-red-600 font-semibold">18 high risk</div>
+              </div>
+              <span className="text-3xl font-bold text-indigo-600">124</span>
             </div>
           </div>
         </CardContent>
@@ -740,6 +795,85 @@ function PopulationView() {
     </div>
   );
 }
+
+
+
+// function PopulationView() {
+
+//   const disorderBreakdown = [
+//     { disorder: "Depression", totalPatients: 645, highRisk: 89, networkSites: 4 },
+//     { disorder: "Bipolar", totalPatients: 298, highRisk: 47, networkSites: 4 },
+//     { disorder: "Anxiety", totalPatients: 423, highRisk: 52, networkSites: 4 },
+//     { disorder: "PTSD", totalPatients: 124, highRisk: 18, networkSites: 3 },
+//   ];
+
+//   return (
+//     <div className="grid grid-cols-1 gap-6 lg:grid-cols-3">
+//       <Card className="rounded-2xl shadow-sm lg:col-span-2">
+//         <CardHeader className="pb-4">
+//           <CardTitle className="text-xl font-semibold text-foreground flex items-center gap-2"><Users className="h-6 w-6"/>Network Overview</CardTitle>
+//         </CardHeader>
+//         <CardContent>
+//           <div className="grid grid-cols-4 gap-4 mb-6">
+//             <div className="text-center">
+//               <div className="text-6xl font-bold text-blue-600">4</div>
+//               <div className="text-xl text-muted-foreground font-semibold">Premier Hospitals</div>
+//             </div>
+//             <div className="text-center">
+//               <div className="text-6xl font-bold text-emerald-600">1,490</div>
+//               <div className="text-xl text-muted-foreground font-semibold">Total Patients</div>
+//             </div>
+//             <div className="text-center">
+//               <div className="text-6xl font-bold text-red-600">181</div>
+//               <div className="text-xl text-muted-foreground font-semibold">High Risk</div>
+//             </div>
+//             <div className="text-center">
+//               <div className="text-6xl font-bold text-amber-600">4</div>
+//               <div className="text-xl text-muted-foreground font-semibold">Conditions</div>
+//             </div>
+//           </div>
+//           <div className="grid grid-cols-2 gap-4">
+//             {disorderBreakdown.map((d, i) => (
+//               <div key={i} className="flex justify-between items-center p-5 bg-gray-50 rounded-lg">
+//                 <div>
+//                   <div className="text-xl font-semibold">{d.disorder}</div>
+//                   <div className="text-lg text-red-600 font-semibold">{d.highRisk} high risk</div>
+//                 </div>
+//                 <span className="text-3xl font-bold text-indigo-600">{d.totalPatients}</span>
+//               </div>
+//             ))}
+//           </div>
+//         </CardContent>
+//       </Card>
+//       <Card className="rounded-2xl shadow-sm">
+//         <CardHeader className="pb-4">
+//           <CardTitle className="text-xl font-semibold text-foreground flex items-center gap-2"><Lock className="h-6 w-6"/>Federated Learning</CardTitle>
+//         </CardHeader>
+//         <CardContent className="space-y-5">
+//           <div className="bg-red-50 border border-red-200 rounded-lg p-5 mb-5">
+//             <div className="flex items-center gap-3 mb-3">
+//               <AlertTriangle className="h-7 w-7 text-red-600" />
+//               <span className="font-semibold text-red-700 text-xl">High Risk Alert</span>
+//             </div>
+//             <div className="text-lg text-red-700">
+//               <strong>181 patients</strong> across network flagged as high risk for relapse in next 14 days
+//             </div>
+//           </div>
+//           <div className="grid grid-cols-2 gap-4">
+//             <div className="text-center">
+//               <div className="text-4xl font-semibold text-emerald-600">89.7%</div>
+//               <div className="text-lg text-muted-foreground">Model Accuracy</div>
+//             </div>
+//             <div className="text-center">
+//               <div className="text-4xl font-semibold text-indigo-600">4</div>
+//               <div className="text-lg text-muted-foreground">Active Sites</div>
+//             </div>
+//           </div>
+//         </CardContent>
+//       </Card>
+//     </div>
+//   );
+// }
 
 export default function Component() {
   const [tab, setTab] = useState("patient");
