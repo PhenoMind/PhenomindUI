@@ -1,8 +1,12 @@
 from collections import defaultdict
 import statistics
+from .recommendation_engine import RecommendationEngine
 
 class AnalyticsService:
     """Service for calculating analytics and insights"""
+    
+    def __init__(self):
+        self.recommendation_engine = RecommendationEngine()
     
     def calculate_patient_analytics(self, patient):
         """Calculate comprehensive analytics for a single patient"""
@@ -52,9 +56,19 @@ class AnalyticsService:
                 'change': avg_activity - prev_activity,
                 'percentChange': ((avg_activity - prev_activity) / prev_activity * 100) if prev_activity > 0 else 0
             }
+            
+            prev_mood = statistics.mean([d.mood for d in prev_data])
+            trends['mood'] = {
+                'current': avg_mood,
+                'previous': prev_mood,
+                'change': avg_mood - prev_mood,
+                'percentChange': ((avg_mood - prev_mood) / prev_mood * 100) if prev_mood > 0 else 0
+            }
         
-        # Generate recommendations based on data
-        recommendations = self._generate_recommendations(patient, trends, avg_sleep, avg_hrv, avg_activity)
+        # Generate recommendations using the recommendation engine
+        recommendations = self.recommendation_engine.generate_recommendations(
+            patient, trends, avg_sleep, avg_hrv, avg_activity
+        )
         
         return {
             'riskScore': patient.risk_score or 0,
@@ -135,48 +149,6 @@ class AnalyticsService:
                 for disorder, counts in disorder_counts.items()
             ]
         }
-    
-    def _generate_recommendations(self, patient, trends, avg_sleep, avg_hrv, avg_activity):
-        """Generate personalized recommendations based on patient data"""
-        recommendations = []
-        
-        # Sleep recommendations
-        if avg_sleep < 7:
-            recommendations.append({
-                'type': 'sleep',
-                'priority': 'high',
-                'message': 'Consider sleep-focused CBT-I referral',
-                'reason': f'Average sleep duration ({avg_sleep:.1f}h) is below recommended 7-8 hours'
-            })
-        
-        # HRV recommendations
-        if patient.wearable and avg_hrv < patient.wearable.hrv_baseline * 0.9:
-            recommendations.append({
-                'type': 'hrv',
-                'priority': 'medium',
-                'message': 'Review HRV and medication timing',
-                'reason': f'HRV ({avg_hrv:.0f}ms) is below baseline ({patient.wearable.hrv_baseline}ms)'
-            })
-        
-        # Activity recommendations
-        if patient.wearable and avg_activity < patient.wearable.steps_goal * 0.7:
-            recommendations.append({
-                'type': 'activity',
-                'priority': 'medium',
-                'message': 'Encourage increased physical activity',
-                'reason': f'Activity level ({avg_activity:.0f} steps) is below goal ({patient.wearable.steps_goal} steps)'
-            })
-        
-        # High risk recommendations
-        if patient.risk_score and patient.risk_score >= 66:
-            recommendations.append({
-                'type': 'risk',
-                'priority': 'critical',
-                'message': 'Schedule immediate follow-up visit',
-                'reason': f'High risk score ({patient.risk_score:.0f}%) detected'
-            })
-        
-        return recommendations
     
     def _identify_biomarker_drivers(self, patient, trends):
         """Identify primary drivers of risk based on biomarker changes with dynamic weighting"""
