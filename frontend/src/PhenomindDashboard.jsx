@@ -663,7 +663,7 @@ function Stat({ title, value, delta, icon: Icon }) {
           </span>
         )}
       </CardHeader>
-      <CardContent className="pt-4">
+      <CardContent className="pt-4 flex justify-center">
         <div className="text-2xl font-semibold text-gray-900">
           {value}
         </div>
@@ -1056,7 +1056,7 @@ export default function Component() {
             <>
           {/* Top stats */}
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
-                <Stat title={`${selectedPatient.disorder} Risk Level`} value={<RiskChip score={selectedPatient.riskScore} />} icon={ShieldAlert} />
+            <Stat title={`${selectedPatient.disorder} Risk Level`} value={<RiskChip score={selectedPatient.riskScore} />} icon={ShieldAlert} />
             <Stat title="Avg Sleep (7d)" value={`${avgSleep.toFixed(1)} h`} delta="-0.8h" icon={CalIcon} />
             <Stat title="Heart Rate Variability (HRV) (7d)" value={`${Math.round(avgHRV)} ms`} delta="-5 ms" icon={Activity} />
             <Stat title="Activity (7d)" value={`${Math.round(avgActivity).toLocaleString()} steps`} delta="-18%" icon={TrendingUp} />
@@ -1346,7 +1346,7 @@ export default function Component() {
                       <div className="text-center p-4 bg-amber-50 rounded-lg">
                         <TrendingUp className="w-6 h-6 mx-auto mb-2 text-amber-600" />
                         <div className="text-2xl font-bold text-amber-900">
-                          {patientAnalytics.averages.mood}/10
+                          {(patientAnalytics.averages.mood / 10).toFixed(1)}/10
                         </div>
                         <div className="text-xs text-amber-700">Mood</div>
                       </div>
