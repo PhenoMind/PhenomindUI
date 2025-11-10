@@ -18,7 +18,6 @@ services:
 
     # If app factory exists in backend/app.py: create_app()
     startCommand: gunicorn -w 2 -k gthread -b 0.0.0.0:$PORT "app:create_app()"
-
     # OR, if you expose `app` in backend/run.py, comment the line above and use:
     # startCommand: gunicorn -w 2 -k gthread -b 0.0.0.0:$PORT run:app
 
@@ -30,12 +29,12 @@ services:
         value: "1"
       - key: FLASK_ENV
         value: production
-      - key: FLASK_APP
-        value: app.py
+      - key: PYTHON_VERSION
+        value: 3.11.11
       - key: SECRET_KEY
         generateValue: true
       - key: CORS_ORIGINS
-        value: https://phenomind-ui.vercel.app   # ensure this matches your exact Vercel domain
+        value: https://phenomind-ui.vercel.app
       - key: DATABASE_URL
         fromDatabase:
           name: phenomind-db
@@ -45,3 +44,4 @@ databases:
   - name: phenomind-db
     plan: free
     postgresMajorVersion: 15
+
